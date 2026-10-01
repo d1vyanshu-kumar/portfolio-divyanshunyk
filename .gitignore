@@ -1,0 +1,15 @@
+node_modules/
+.DS_Store
+dist/
+.astro/
+target/
+*.log
+.env
+.env.*
+!.env.example
+.wrangler/
+.idea/
+*.pem
+*.key
+secrets/
+docs/source/photo/originals/
