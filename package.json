@@ -1,0 +1,23 @@
+{
+  "name": "portfolio-divyanshunyk",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev:web": "pnpm --filter @portfolio/web dev",
+    "build:web": "pnpm --filter @portfolio/web build",
+    "preview:web": "pnpm --filter @portfolio/web preview",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.5.3"
+  }
+}
