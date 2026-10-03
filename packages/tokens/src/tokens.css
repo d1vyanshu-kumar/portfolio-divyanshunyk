@@ -1,0 +1,211 @@
+/* ============================================================
+   Design Tokens: portfolio-divyanshuNYK
+   Three themes: dawn (warm, DEFAULT), daylight (light), after-hours (dark)
+   WCAG AA & AAA contrast verified for all text pairings.
+   Never use raw hex in components. Always use var(--token).
+   ============================================================ */
+
+/* --- Dawn (warm, DEFAULT) --- */
+:root,
+[data-theme="dawn"] {
+  --color-bg: #F4EAD4;
+  --color-surface: #FAF2E3;
+  --color-surface-elevated: #FFF9ED;
+  --color-text: #1C140E;
+  --color-text-secondary: #2E2218;
+  --color-muted: #524233;
+  --color-accent: #B23D15;
+  --color-accent-hover: #962E0E;
+  --color-accent-subtle: rgba(178, 61, 21, 0.12);
+  --color-open-to-work: #1B7A2B;
+  --color-border: rgba(43, 33, 24, 0.14);
+  --color-border-hover: rgba(43, 33, 24, 0.28);
+  --color-glass-bg: rgba(250, 242, 227, 0.88);
+  --color-glass-border: rgba(43, 33, 24, 0.12);
+  --color-glass-highlight: rgba(255, 255, 255, 0.6);
+  --color-overlay: rgba(244, 234, 212, 0.8);
+  --color-code-bg: #FAF4E8;
+  --color-terminal-bg: #FDF9F0;
+  --color-terminal-header: #EFE4D0;
+  --color-terminal-border: #D6C7AE;
+  --color-terminal-text: #23180F;
+  --color-terminal-muted: #5C4B3A;
+
+  --shadow-sm: 0 1px 2px rgba(43, 33, 24, 0.08);
+  --shadow-md: 0 4px 12px rgba(43, 33, 24, 0.1);
+  --shadow-lg: 0 8px 32px rgba(43, 33, 24, 0.14);
+  --shadow-glow: 0 0 24px rgba(178, 61, 21, 0.15);
+
+  color-scheme: light;
+}
+
+/* --- Daylight (light) --- */
+[data-theme="daylight"] {
+  --color-bg: #F6F6F4;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
+  --color-text: #09090B;
+  --color-text-secondary: #1F242E;
+  --color-muted: #3B4252;
+  --color-accent: #C92A10;
+  --color-accent-hover: #A82210;
+  --color-accent-subtle: rgba(201, 42, 16, 0.1);
+  --color-open-to-work: #0E7A3B;
+  --color-border: rgba(0, 0, 0, 0.12);
+  --color-border-hover: rgba(0, 0, 0, 0.22);
+  --color-glass-bg: rgba(255, 255, 255, 0.88);
+  --color-glass-border: rgba(0, 0, 0, 0.1);
+  --color-glass-highlight: rgba(255, 255, 255, 0.7);
+  --color-overlay: rgba(255, 255, 255, 0.75);
+  --color-code-bg: #FFFFFF;
+  --color-terminal-bg: #FFFFFF;
+  --color-terminal-header: #F1F3F7;
+  --color-terminal-border: #E2E8F0;
+  --color-terminal-text: #0F172A;
+  --color-terminal-muted: #64748B;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.14);
+  --shadow-glow: 0 0 24px rgba(201, 42, 16, 0.12);
+
+  color-scheme: light;
+}
+
+/* --- After Hours (dark) --- */
+[data-theme="after-hours"] {
+  --color-bg: #0B0B0D;
+  --color-surface: #141418;
+  --color-surface-elevated: #1C1C22;
+  --color-text: #EDEDEF;
+  --color-text-secondary: #CBD5E1;
+  --color-muted: #94A3B8;
+  --color-accent: #FF5436;
+  --color-accent-hover: #FF7A62;
+  --color-accent-subtle: rgba(255, 84, 54, 0.16);
+  --color-open-to-work: #3DDC84;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-hover: rgba(255, 255, 255, 0.22);
+  --color-glass-bg: rgba(20, 20, 24, 0.85);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-highlight: rgba(255, 255, 255, 0.05);
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-code-bg: #0A0E17;
+  --color-terminal-bg: #080C14;
+  --color-terminal-header: #111726;
+  --color-terminal-border: rgba(255, 255, 255, 0.12);
+  --color-terminal-text: #F1F5F9;
+  --color-terminal-muted: #64748B;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 24px rgba(255, 84, 54, 0.18);
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   Typography Scale (fluid, clamp-based)
+   ============================================================ */
+:root {
+  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", "Fira Code", monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
+
+  --text-xs: clamp(0.6875rem, 0.65rem + 0.12vw, 0.75rem);
+  --text-sm: clamp(0.8125rem, 0.77rem + 0.18vw, 0.875rem);
+  --text-base: clamp(0.9375rem, 0.89rem + 0.22vw, 1rem);
+  --text-lg: clamp(1.0625rem, 0.99rem + 0.36vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.14rem + 0.54vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.32rem + 0.89vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.59rem + 1.43vw, 2.5rem);
+  --text-4xl: clamp(2.25rem, 1.79rem + 2.32vw, 3.25rem);
+  --text-5xl: clamp(2.75rem, 2.05rem + 3.57vw, 4.25rem);
+  --text-display: clamp(3.25rem, 2.27rem + 4.91vw, 5.5rem);
+
+  --leading-none: 1;
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tighter: -0.03em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.04em;
+  --tracking-caps: 0.08em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
+
+/* ============================================================
+   Spacing Scale
+   ============================================================ */
+:root {
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+  --space-40: 10rem;
+
+  --section-gap: clamp(4rem, 3rem + 5vw, 8rem);
+  --container-max: 72rem;
+  --container-pad: clamp(1rem, 0.5rem + 2vw, 2rem);
+}
+
+/* ============================================================
+   Radii, Transitions, Z-Index
+   ============================================================ */
+:root {
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+  --duration-entrance: 500ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --z-base: 0;
+  --z-above: 10;
+  --z-nav: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-max: 9999;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-slower: 0ms;
+    --duration-entrance: 0ms;
+  }
+}
