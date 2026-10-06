@@ -1,0 +1,178 @@
+---
+import { ClientRouter } from "astro:transitions";
+import CommandPalette from "@/components/nav/CommandPalette.astro";
+import CatCompanion from "@/components/ui/CatCompanion.astro";
+import "@/styles/blog.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "Software engineer. I make systems reach the machines they were never designed for.",
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? "https://divyanshunyk.dev");
+---
+
+<!doctype html>
+<html lang="en" data-theme="dawn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content="Divyanshu Kumar" />
+    <meta name="theme-color" content="#F4EAD4" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL.href} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <!-- Preload critical local fonts -->
+    <link
+      rel="preload"
+      href="/fonts/Geist-Variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/InstrumentSerif-Italic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <link rel="canonical" href={canonicalURL.href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <title>{title}</title>
+
+    <!-- Theme: zero-flash inline script. Runs before first paint. -->
+    <script is:inline>
+      (function () {
+        function getSavedTheme() {
+          try {
+            return localStorage.getItem("theme") || "dawn";
+          } catch (e) {
+            return "dawn";
+          }
+        }
+
+        function applyTheme(theme, targetDoc) {
+          var doc = targetDoc || document;
+          doc.documentElement.setAttribute("data-theme", theme);
+          var meta = doc.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            var colorMap = {
+              "dawn": "#F4EAD4",
+              "daylight": "#FFFFFF",
+              "after-hours": "#0B0B0D"
+            };
+            meta.setAttribute("content", colorMap[theme] || "#F4EAD4");
+          }
+        }
+
+        // Apply immediately before first paint
+        applyTheme(getSavedTheme());
+
+        // Astro View Transitions preservation: ensure incoming document receives active theme before swap
+        document.addEventListener("astro:before-swap", function (e) {
+          applyTheme(getSavedTheme(), e.newDocument);
+        });
+
+        // Also ensure on after-swap that current document is strictly in sync
+        document.addEventListener("astro:after-swap", function () {
+          applyTheme(getSavedTheme());
+        });
+
+        // Cross-tab theme sync
+        window.addEventListener("storage", function (e) {
+          if (e.key === "theme" && e.newValue) {
+            applyTheme(e.newValue);
+          }
+        });
+      })();
+    </script>
+
+    <!-- Client-side View Transitions Router -->
+    <ClientRouter />
+  </head>
+  <body class="grain">
+    <slot />
+    <CommandPalette />
+    <CatCompanion />
+
+    <!-- Smooth Kinetic Inertia Scrolling (GetLayers.ai style) & Scroll Reveal -->
+    <script>
+      import Lenis from "lenis";
+
+      let lenis: Lenis | null = null;
+      let rafId: number | null = null;
+
+      function setupScrollEngines() {
+        // 1. Lenis Smooth Scroll
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          if (lenis) {
+            lenis.destroy();
+            if (rafId) cancelAnimationFrame(rafId);
+          }
+
+          lenis = new Lenis({
+            duration: 1.15,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: "vertical",
+            gestureOrientation: "vertical",
+            smoothWheel: true,
+            wheelMultiplier: 1.0,
+            touchMultiplier: 1.8,
+          });
+
+          function raf(time: number) {
+            lenis?.raf(time);
+            rafId = requestAnimationFrame(raf);
+          }
+          rafId = requestAnimationFrame(raf);
+        }
+
+        // 2. IntersectionObserver for Kinetic Scroll Reveal
+        const revealElements = document.querySelectorAll(".scroll-reveal:not(.is-revealed)");
+        if (revealElements.length > 0) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("is-revealed");
+                  observer.unobserve(entry.target);
+                }
+              });
+            },
+            {
+              threshold: 0.12,
+              rootMargin: "0px 0px -40px 0px",
+            }
+          );
+
+          revealElements.forEach((el) => observer.observe(el));
+        }
+      }
+
+      setupScrollEngines();
+      document.addEventListener("astro:page-load", setupScrollEngines);
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @import "@/styles/global.css";
+</style>
