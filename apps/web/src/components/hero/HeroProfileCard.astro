@@ -1,0 +1,476 @@
+---
+// 100% Rock-Solid Native Astro Component with 3D Mouse Tilt & Confetti
+// Zero React hydration mismatch - renders instantly, permanently visible
+---
+
+<div class="profile-card-3d-wrapper" id="hero-profile-wrapper">
+  <div class="profile-card-3d glass" id="hero-profile-card">
+    <!-- Dynamic Specular Glare Overlay -->
+    <div class="card-glare" id="card-glare" aria-hidden="true"></div>
+
+    <!-- Ambient Backlight Glow -->
+    <div class="card-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Cinematic Desktop Photo Frame with 3D Depth -->
+    <div class="photo-frame-outer">
+      <div class="photo-frame-inner">
+        <!-- Cleaned Cinematic Desktop Portrait -->
+        <picture>
+          <source srcset="/photo/hero-cinematic.webp" type="image/webp" />
+          <img
+            src="/photo/hero-cinematic.jpg"
+            alt="Divyanshu Kumar - Senior Backend & Distributed Systems Engineer"
+            class="hero-cinematic-img"
+            width="1024"
+            height="764"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </picture>
+
+        <!-- Cinematic Edge Vignette -->
+        <div class="photo-vignette" aria-hidden="true"></div>
+
+        <!-- Viewfinder HUD Corner Accents (Precision Engineering) -->
+        <div class="hud-corner hud-tl" aria-hidden="true"></div>
+        <div class="hud-corner hud-tr" aria-hidden="true"></div>
+        <div class="hud-corner hud-bl" aria-hidden="true"></div>
+        <div class="hud-corner hud-br" aria-hidden="true"></div>
+
+        <!-- 3D FLOATING BADGE 1: GSoC Contributor (translateZ 45px) -->
+        <div class="floating-chip chip-gsoc glass">
+          <span class="beacon-dot"></span>
+          <span>GSoC &middot; Debezium / Red Hat</span>
+        </div>
+
+        <!-- 3D FLOATING BADGE 2: Telemetry Stream (translateZ 60px) -->
+        <div class="floating-chip chip-telemetry glass">
+          <span class="prompt-sym">$</span>
+          <span>cdc.events.stream() &middot; 26 PRs</span>
+        </div>
+
+        <!-- 3D FLOATING BADGE 3: Location (translateZ 35px) -->
+        <div class="floating-chip chip-location glass">
+          <span>📍</span>
+          <span>Gurugram, IN</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Bio & Interactive Action Strip -->
+    <div class="card-info-strip">
+      <div class="card-title-row">
+        <div>
+          <span class="card-author-name">Divyanshu Kumar</span>
+          <span class="card-author-title">Distributed Systems &middot; CDC Infrastructure</span>
+        </div>
+
+        <div class="card-status-pill">
+          <span class="status-pulse-dot"></span>
+          <span>Open to Roles</span>
+        </div>
+      </div>
+
+      <!-- Quick Copy Email Interactive Button with Confetti -->
+      <button
+        type="button"
+        id="hero-copy-email-btn"
+        class="copy-email-interactive-btn"
+        aria-label="Copy email address kumardivyanshu118@gmail.com"
+      >
+        <span class="email-text">kumardivyanshu118@gmail.com</span>
+        <span class="copy-badge" id="hero-copy-badge">Copy Email</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import confetti from "canvas-confetti";
+
+  function initProfileCard() {
+    const wrapper = document.getElementById("hero-profile-wrapper");
+    const card = document.getElementById("hero-profile-card");
+    const glare = document.getElementById("card-glare");
+    const copyBtn = document.getElementById("hero-copy-email-btn");
+    const copyBadge = document.getElementById("hero-copy-badge");
+
+    if (!wrapper || !card) return;
+
+    // 1. 3D Perspective Tilt on Mouse Movement
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotX = ((y - centerY) / centerY) * -12;
+      const rotY = ((x - centerX) / centerX) * 12;
+
+      card.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+
+      if (glare) {
+        const glareX = (x / rect.width) * 100;
+        const glareY = (y / rect.height) * 100;
+        glare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 255, 255, 0.2) 0%, transparent 60%)`;
+        glare.style.opacity = "1";
+      }
+    };
+
+    const handleMouseLeave = () => {
+      card.style.transform = `rotateX(0deg) rotateY(0deg)`;
+      if (glare) {
+        glare.style.opacity = "0";
+      }
+    };
+
+    wrapper.addEventListener("mousemove", handleMouseMove, { passive: true });
+    wrapper.addEventListener("mouseleave", handleMouseLeave, { passive: true });
+
+    // 2. Email Copy with Confetti Trigger
+    copyBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText("kumardivyanshu118@gmail.com").then(() => {
+        if (copyBadge) {
+          copyBadge.textContent = "Copied! 🎉";
+          copyBadge.classList.add("copied-active");
+        }
+
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.7 },
+          colors: ["#FF5436", "#6366F1", "#3DDC84", "#FFD600"],
+        });
+
+        setTimeout(() => {
+          if (copyBadge) {
+            copyBadge.textContent = "Copy Email";
+            copyBadge.classList.remove("copied-active");
+          }
+        }, 2500);
+      });
+    });
+  }
+
+  // Run on initial load and view transitions
+  initProfileCard();
+  document.addEventListener("astro:page-load", initProfileCard);
+</script>
+
+<style>
+  .profile-card-3d-wrapper {
+    perspective: 1200px;
+    width: 100%;
+    max-width: 34rem;
+    display: block;
+  }
+
+  .profile-card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    border-radius: 2rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    border: 1px solid var(--color-glass-border);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    background: var(--color-glass-bg);
+  }
+
+  .card-glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .card-ambient-glow {
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(circle at 70% 30%, rgba(255, 84, 54, 0.2), rgba(99, 102, 241, 0.18), transparent 70%);
+    filter: blur(24px);
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 2.5rem;
+  }
+
+  .photo-frame-outer {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 11;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(255, 84, 54, 0.6), rgba(99, 102, 241, 0.5), rgba(255, 255, 255, 0.15));
+    padding: 2px;
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.45);
+    transform: translateZ(15px);
+    transform-style: preserve-3d;
+  }
+
+  .photo-frame-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: calc(1.5rem - 2px);
+    overflow: hidden;
+    position: relative;
+    background: #0d1319;
+  }
+
+  .hero-cinematic-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left center;
+    display: block;
+    filter: contrast(1.03) saturate(1.02);
+  }
+
+  .photo-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 40% 50%, transparent 55%, rgba(11, 11, 13, 0.4) 100%);
+    pointer-events: none;
+  }
+
+  /* HUD Reticle Corners */
+  .hud-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  .hud-tl { top: 10px; left: 10px; border-top: 2px solid; border-left: 2px solid; }
+  .hud-tr { top: 10px; right: 10px; border-top: 2px solid; border-right: 2px solid; }
+  .hud-bl { bottom: 10px; left: 10px; border-bottom: 2px solid; border-left: 2px solid; }
+  .hud-br { bottom: 10px; right: 10px; border-bottom: 2px solid; border-right: 2px solid; }
+
+  /* 3D Floating Holographic Chips */
+  .floating-chip {
+    position: absolute;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+
+  .chip-gsoc {
+    top: 0.85rem;
+    left: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    color: #ededef;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(11, 11, 13, 0.8);
+    transform: translateZ(45px);
+  }
+
+  .beacon-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3DDC84;
+    box-shadow: 0 0 8px #3DDC84;
+  }
+
+  .chip-telemetry {
+    bottom: 0.85rem;
+    right: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    color: #ff8a00;
+    border: 1px solid rgba(255, 138, 0, 0.4);
+    background: rgba(11, 11, 13, 0.85);
+    transform: translateZ(60px);
+  }
+
+  .prompt-sym {
+    color: #3DDC84;
+    font-weight: 700;
+  }
+
+  .chip-location {
+    bottom: 0.85rem;
+    left: 0.85rem;
+    padding: 0.3rem 0.65rem;
+    gap: 0.35rem;
+    font-size: 0.6875rem;
+    color: #ededef;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(11, 11, 13, 0.8);
+    transform: translateZ(35px);
+  }
+
+  /* Card Info Strip */
+  .card-info-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transform: translateZ(25px);
+  }
+
+  .card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .card-author-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: var(--tracking-tight);
+    display: block;
+    line-height: 1.2;
+  }
+
+  .card-author-title {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+
+  .card-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--color-open-to-work);
+    font-weight: 600;
+    background: var(--color-surface);
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+  }
+
+  .status-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-open-to-work);
+    box-shadow: 0 0 8px var(--color-open-to-work);
+  }
+
+  .copy-email-interactive-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.95rem;
+    border-radius: 0.85rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s, transform 0.15s;
+  }
+
+  .copy-email-interactive-btn:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+
+  .email-text {
+    opacity: 0.95;
+    font-weight: 500;
+  }
+
+  .copy-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    background: var(--color-accent);
+    color: white;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .copy-badge.copied-active {
+    background: var(--color-open-to-work);
+  }
+
+  /* Mobile Responsive Optimization for Profile Stage */
+  @media (max-width: 480px) {
+    .profile-card-3d-wrapper {
+      max-width: 100%;
+    }
+    .profile-card-3d {
+      padding: 1rem;
+      border-radius: 1.5rem;
+      gap: 0.85rem;
+    }
+    .photo-frame-outer {
+      border-radius: 1.25rem;
+    }
+    .photo-frame-inner {
+      border-radius: calc(1.25rem - 2px);
+    }
+    /* Move location chip to top-right to prevent horizontal collision with telemetry chip */
+    .chip-location {
+      top: 0.75rem;
+      bottom: auto;
+      right: 0.75rem;
+      left: auto;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.625rem;
+    }
+    .chip-gsoc {
+      top: 0.75rem;
+      left: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.6875rem;
+    }
+    .chip-telemetry {
+      bottom: 0.75rem;
+      right: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.6875rem;
+    }
+    .copy-email-interactive-btn {
+      padding: 0.5rem 0.75rem;
+      gap: 0.4rem;
+    }
+    .email-text {
+      font-size: clamp(0.6875rem, 3.2vw, 0.78125rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 185px;
+    }
+    .copy-badge {
+      font-size: 0.6875rem;
+      padding: 0.15rem 0.5rem;
+      flex-shrink: 0;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .profile-card-3d {
+      padding: 0.75rem;
+    }
+    .email-text {
+      max-width: 145px;
+      font-size: 0.6875rem;
+    }
+    .card-author-name {
+      font-size: 1.15rem;
+    }
+  }
+</style>
