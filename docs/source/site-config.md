@@ -1,0 +1,11 @@
+# Site configuration decisions
+- Domain: none yet. Web deploys to a workers.dev address. Keep the site URL in one config value.
+- Hero headline: Backend engineer. I make systems reach the machines they were never designed for.
+- Hero sub-line: Two-time GSoC contributor (MIT App Inventor, Debezium). 26 merged pull requests across 13 open source organizations.
+- Nav: Work, Stack, Dashboard, Writing, After Hours, Contact. The logo links home.
+- Themes: after-hours (dark), daylight (light), dawn (warm). The default follows the system setting.
+- Photo files in docs/source/photo/: nayak-cutout.png (transparent, hero, anchored bottom-left, bleeds off the left and bottom edges), nayak-avatar.jpg (square crop), nayak-sticker.png (die-cut, used on contact and 404 only).
+- Music: ListenBrainz public profile, username in the LISTENBRAINZ_USER env var. Show "last played" when nothing is playing now. No Spotify API. No autoplay audio. No lyrics.
+- Writing seed: cross-post my dev.to articles with canonical links back to dev.to.
+- The web app must work fully when the API is down. Dynamic panels fall back to a build-time snapshot.
+- Analytics: none for now. No third-party scripts.
