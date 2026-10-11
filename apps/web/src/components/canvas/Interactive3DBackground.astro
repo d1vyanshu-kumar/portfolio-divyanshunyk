@@ -1,0 +1,425 @@
+---
+// Interactive 3D Fluid Aura & Distributed Systems Topology Mesh
+// Inspired by ThreeUI (Silk/Aura), GetLayers.ai & Mistral AI
+// GPU-accelerated GLSL shader + mouse gravity ripples + dynamic theme morphing.
+---
+
+<div class="interactive-3d-bg" id="hero-3d-canvas-wrap" aria-hidden="true">
+  <canvas id="threeui-webgl-canvas"></canvas>
+  <div class="canvas-ambient-gradient"></div>
+</div>
+
+<script>
+  import * as THREE from "three";
+
+  function initThreeUIBackground() {
+    const container = document.getElementById("hero-3d-canvas-wrap");
+    const canvas = document.getElementById("threeui-webgl-canvas") as HTMLCanvasElement | null;
+    if (!container || !canvas) return;
+
+    let animId: number | null = null;
+    let renderer: THREE.WebGLRenderer | null = null;
+
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      });
+    } catch (e) {
+      console.warn("WebGL not supported or context lost", e);
+      return;
+    }
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 8, 55);
+    camera.lookAt(0, 0, 0);
+
+    // Color Palettes for the 3 Themes
+    const palettes = {
+      dawn: {
+        c1: new THREE.Color(0xb23d15), // warm terracotta
+        c2: new THREE.Color(0xd97706), // saffron amber
+        c3: new THREE.Color(0xf59e0b), // warm gold shimmer
+        c4: new THREE.Color(0xf4ead4), // warm parchment base
+      },
+      daylight: {
+        c1: new THREE.Color(0x2563eb), // sapphire blue
+        c2: new THREE.Color(0xc92a10), // vibrant vermilion
+        c3: new THREE.Color(0x38bdf8), // azure highlight
+        c4: new THREE.Color(0xf6f6f4), // crisp slate base
+      },
+      "after-hours": {
+        c1: new THREE.Color(0xff5436), // flame cyber orange
+        c2: new THREE.Color(0x6366f1), // electric indigo
+        c3: new THREE.Color(0x00f5d4), // neon cyan pulse
+        c4: new THREE.Color(0x0b0b0d), // midnight obsidian base
+      },
+    };
+
+    const getActiveTheme = (): keyof typeof palettes => {
+      const theme = document.documentElement.getAttribute("data-theme");
+      if (theme === "daylight" || theme === "after-hours") return theme;
+      return "dawn";
+    };
+
+    const currentPalette = {
+      c1: palettes[getActiveTheme()].c1.clone(),
+      c2: palettes[getActiveTheme()].c2.clone(),
+      c3: palettes[getActiveTheme()].c3.clone(),
+      c4: palettes[getActiveTheme()].c4.clone(),
+    };
+
+    // 1. FLUID AURA / SILK WAVE GLSL SHADER
+    const vertexShader = `
+      uniform float uTime;
+      uniform vec2 uMouse;
+      uniform float uMouseStrength;
+      varying vec2 vUv;
+      varying float vElevation;
+
+      // Simplex 2D noise
+      vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+      float snoise(vec2 v){
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                 -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy) );
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1;
+        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod(i, 289.0);
+        vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+        + i.x + vec3(0.0, i1.x, 1.0 ));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m*m ;
+        m = m*m ;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+        vec3 g;
+        g.x  = a0.x  * x0.x  + h.x  * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+
+        // Multi-frequency wave synthesis
+        float n1 = snoise(vec2(pos.x * 0.04 + uTime * 0.25, pos.y * 0.04 + uTime * 0.2));
+        float n2 = snoise(vec2(pos.x * 0.09 - uTime * 0.15, pos.y * 0.09 + uTime * 0.18)) * 0.5;
+        float elevation = (n1 + n2) * 5.5;
+
+        // Interactive mouse gravitational ripple
+        float d = distance(pos.xy, uMouse * vec2(40.0, 25.0));
+        float ripple = sin(d * 0.35 - uTime * 3.5) * exp(-d * 0.08) * uMouseStrength * 6.5;
+        elevation += ripple;
+
+        pos.z += elevation;
+        vElevation = elevation;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform vec3 uColor1;
+      uniform vec3 uColor2;
+      uniform vec3 uColor3;
+      uniform vec3 uColor4;
+      uniform float uTime;
+      varying vec2 vUv;
+      varying float vElevation;
+
+      void main() {
+        float factor1 = smoothstep(-6.0, 6.0, vElevation);
+        float factor2 = smoothstep(-2.0, 7.0, vElevation);
+
+        vec3 grad1 = mix(uColor4, uColor1, factor1);
+        vec3 grad2 = mix(uColor2, uColor3, factor2);
+        vec3 finalColor = mix(grad1, grad2, 0.55);
+
+        float edgeX = smoothstep(0.0, 0.18, vUv.x) * smoothstep(1.0, 0.82, vUv.x);
+        float edgeY = smoothstep(0.0, 0.18, vUv.y) * smoothstep(1.0, 0.82, vUv.y);
+        float alpha = edgeX * edgeY * 0.72;
+
+        gl_FragColor = vec4(finalColor, alpha);
+      }
+    `;
+
+    const planeGeom = new THREE.PlaneGeometry(125, 75, 72, 54);
+    const shaderMaterial = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector2(0, 0) },
+        uMouseStrength: { value: 0 },
+        uColor1: { value: currentPalette.c1 },
+        uColor2: { value: currentPalette.c2 },
+        uColor3: { value: currentPalette.c3 },
+        uColor4: { value: currentPalette.c4 },
+      },
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    const mesh = new THREE.Mesh(planeGeom, shaderMaterial);
+    mesh.rotation.x = -Math.PI * 0.28;
+    mesh.position.y = -6;
+    mesh.position.z = -5;
+    scene.add(mesh);
+
+    // 2. CONSTELLATION DISTRIBUTED TOPOLOGY (Kafka Nodes & CDC LSN Pipelines)
+    const nodeCount = 42;
+    const nodePositions = new Float32Array(nodeCount * 3);
+    const nodeVelocities: { x: number; y: number; z: number }[] = [];
+
+    const spreadX = 90;
+    const spreadY = 50;
+    const spreadZ = 30;
+
+    for (let i = 0; i < nodeCount; i++) {
+      nodePositions[i * 3] = (Math.random() - 0.5) * spreadX;
+      nodePositions[i * 3 + 1] = (Math.random() - 0.5) * spreadY + 4;
+      nodePositions[i * 3 + 2] = (Math.random() - 0.5) * spreadZ;
+
+      nodeVelocities.push({
+        x: (Math.random() - 0.5) * 0.04,
+        y: (Math.random() - 0.5) * 0.04,
+        z: (Math.random() - 0.5) * 0.03,
+      });
+    }
+
+    const nodeGeom = new THREE.BufferGeometry();
+    nodeGeom.setAttribute("position", new THREE.BufferAttribute(nodePositions, 3));
+
+    const pCanvas = document.createElement("canvas");
+    pCanvas.width = 64;
+    pCanvas.height = 64;
+    const pCtx = pCanvas.getContext("2d");
+    if (pCtx) {
+      const grad = pCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255, 255, 255, 1)");
+      grad.addColorStop(0.25, "rgba(255, 138, 0, 0.9)");
+      grad.addColorStop(0.65, "rgba(99, 102, 241, 0.35)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      pCtx.fillStyle = grad;
+      pCtx.fillRect(0, 0, 64, 64);
+    }
+    const nodeTexture = new THREE.CanvasTexture(pCanvas);
+
+    const nodeMaterial = new THREE.PointsMaterial({
+      size: 4.8,
+      map: nodeTexture,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+
+    const nodePoints = new THREE.Points(nodeGeom, nodeMaterial);
+    scene.add(nodePoints);
+
+    // Proximity Lines
+    const maxLines = 65;
+    const linePositions = new Float32Array(maxLines * 6);
+    const lineColors = new Float32Array(maxLines * 6);
+    const lineGeom = new THREE.BufferGeometry();
+    lineGeom.setAttribute("position", new THREE.BufferAttribute(linePositions, 3).setUsage(THREE.DynamicDrawUsage));
+    lineGeom.setAttribute("color", new THREE.BufferAttribute(lineColors, 3).setUsage(THREE.DynamicDrawUsage));
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+
+    const lines = new THREE.LineSegments(lineGeom, lineMaterial);
+    scene.add(lines);
+
+    // Interactive Mouse Tracking with Fluid Inertia
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let targetStrength = 0;
+    let mouseStrength = 0;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetY = -(e.clientY / window.innerHeight - 0.5) * 2;
+      targetStrength = 1.0;
+    };
+
+    const handleMouseLeave = () => {
+      targetStrength = 0;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    const handleResize = () => {
+      if (!renderer) return;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    });
+    observer.observe(container);
+
+    const startTime = performance.now();
+
+    // Main 60fps Animation Loop
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+
+      if (!isVisible) return;
+
+      const elapsedTime = (performance.now() - startTime) * 0.001;
+
+      // Inertial mouse lerp
+      mouseX += (targetX - mouseX) * 0.045;
+      mouseY += (targetY - mouseY) * 0.045;
+      mouseStrength += (targetStrength - mouseStrength) * 0.05;
+      targetStrength *= 0.98;
+
+      // Parallax
+      camera.position.x = mouseX * 7.5;
+      camera.position.y = 8 + mouseY * 4.5;
+      camera.lookAt(0, -1, 0);
+
+      // Smooth Theme Palette Interpolation
+      const activeThemeKey = getActiveTheme();
+      const targetPalette = palettes[activeThemeKey];
+      currentPalette.c1.lerp(targetPalette.c1, 0.06);
+      currentPalette.c2.lerp(targetPalette.c2, 0.06);
+      currentPalette.c3.lerp(targetPalette.c3, 0.06);
+      currentPalette.c4.lerp(targetPalette.c4, 0.06);
+
+      // Update Shader Uniforms
+      shaderMaterial.uniforms.uTime.value = elapsedTime;
+      shaderMaterial.uniforms.uMouse.value.set(mouseX, mouseY);
+      shaderMaterial.uniforms.uMouseStrength.value = mouseStrength;
+
+      // Animate Nodes
+      const pArr = (nodeGeom.attributes.position as THREE.BufferAttribute).array as Float32Array;
+      for (let i = 0; i < nodeCount; i++) {
+        const idx = i * 3;
+        pArr[idx] += nodeVelocities[i].x;
+        pArr[idx + 1] += nodeVelocities[i].y;
+        pArr[idx + 2] += nodeVelocities[i].z;
+
+        if (pArr[idx] < -spreadX / 2 || pArr[idx] > spreadX / 2) nodeVelocities[i].x *= -1;
+        if (pArr[idx + 1] < -spreadY / 2 || pArr[idx + 1] > spreadY / 2 + 8) nodeVelocities[i].y *= -1;
+        if (pArr[idx + 2] < -spreadZ / 2 || pArr[idx + 2] > spreadZ / 2) nodeVelocities[i].z *= -1;
+      }
+      (nodeGeom.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+
+      // Animate Proximity Lines
+      let lineIdx = 0;
+      let count = 0;
+      const lPos = (lineGeom.attributes.position as THREE.BufferAttribute).array as Float32Array;
+      const lCol = (lineGeom.attributes.color as THREE.BufferAttribute).array as Float32Array;
+      const maxDist = 24;
+
+      for (let i = 0; i < nodeCount && count < maxLines; i++) {
+        for (let j = i + 1; j < nodeCount && count < maxLines; j++) {
+          const dx = pArr[i * 3] - pArr[j * 3];
+          const dy = pArr[i * 3 + 1] - pArr[j * 3 + 1];
+          const dz = pArr[i * 3 + 2] - pArr[j * 3 + 2];
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          if (dist < maxDist) {
+            const alpha = Math.pow(1.0 - dist / maxDist, 1.5) * 0.55;
+
+            lPos[lineIdx] = pArr[i * 3];
+            lPos[lineIdx + 1] = pArr[i * 3 + 1];
+            lPos[lineIdx + 2] = pArr[i * 3 + 2];
+            lCol[lineIdx] = currentPalette.c1.r * alpha;
+            lCol[lineIdx + 1] = currentPalette.c1.g * alpha;
+            lCol[lineIdx + 2] = currentPalette.c1.b * alpha;
+
+            lPos[lineIdx + 3] = pArr[j * 3];
+            lPos[lineIdx + 4] = pArr[j * 3 + 1];
+            lPos[lineIdx + 5] = pArr[j * 3 + 2];
+            lCol[lineIdx + 3] = currentPalette.c2.r * alpha;
+            lCol[lineIdx + 4] = currentPalette.c2.g * alpha;
+            lCol[lineIdx + 5] = currentPalette.c2.b * alpha;
+
+            lineIdx += 6;
+            count++;
+          }
+        }
+      }
+
+      lineGeom.setDrawRange(0, count * 2);
+      (lineGeom.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+      (lineGeom.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+
+      renderer?.render(scene, camera);
+    };
+
+    animate();
+
+    // Clean up on page navigation
+    document.addEventListener("astro:before-swap", () => {
+      if (animId !== null) cancelAnimationFrame(animId);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
+      renderer?.dispose();
+    }, { once: true });
+  }
+
+  initThreeUIBackground();
+  document.addEventListener("astro:page-load", initThreeUIBackground);
+</script>
+
+<style>
+  .interactive-3d-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  #threeui-webgl-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .canvas-ambient-gradient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 30%, transparent 40%, var(--color-bg) 95%);
+    opacity: 0.65;
+  }
+</style>
