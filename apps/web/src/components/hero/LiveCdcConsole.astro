@@ -1,0 +1,1103 @@
+---
+// Live Interactive CDC CLI Simulator & Reverse Engineering Playground
+// Theme-adaptive, authentic ANSI terminal font highlighting for senior developers.
+---
+
+<div class="cdc-console-wrapper" id="cdc-console-container" role="region" aria-label="Interactive Debezium CDC Terminal">
+  <!-- Terminal Header -->
+  <div class="terminal-header">
+    <div class="header-left">
+      <div class="traffic-lights" aria-hidden="true">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+      </div>
+      <div class="terminal-title-group">
+        <span class="terminal-cmd">debezium-conductor-cli</span>
+        <span class="terminal-runtime">Quarkus 3.8.4 Native &middot; PID 40912</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="status-indicator status-live" id="stream-status-pill">
+        <span class="stream-dot"></span>
+        <span id="stream-status-text">STREAMING</span>
+      </span>
+      <button
+        type="button"
+        id="btn-toggle-stream"
+        class="header-action-btn"
+        aria-label="Pause or resume CDC telemetry stream"
+        title="Toggle automatic stream"
+      >
+        <span id="stream-btn-icon">⏸</span>
+        <span id="stream-btn-label">Pause</span>
+      </button>
+      <button
+        type="button"
+        id="btn-clear-terminal"
+        class="header-action-btn"
+        aria-label="Clear terminal output"
+        title="Clear terminal (Ctrl+L)"
+      >
+        <span>🧹 Clear</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Terminal Output Body -->
+  <div class="terminal-body" id="cdc-log-stream" tabindex="0" role="log" aria-live="polite">
+    <!-- Boot Banner -->
+    <div class="terminal-banner">
+      <div class="banner-line-title">▶ DEBEZIUM HIGH-THROUGHPUT CDC CONVERTOR · v3.1-SNAPSHOT</div>
+      <div class="banner-line-sub">Connected: PostgreSQL 16 (slot: <span class="slot-hl">'debezium_cdc_active'</span>) → Kafka 3.7 (Avro Schema v3.1)</div>
+      <div class="banner-line-sub">Interactive Senior Developer Sandbox — Type commands below or click quick actions.</div>
+      <div class="banner-divider"></div>
+    </div>
+  </div>
+
+  <!-- Quick Command Pills -->
+  <div class="cli-shortcuts-bar" aria-label="Interactive Command Shortcuts">
+    <span class="shortcuts-label">QUICK ACTIONS:</span>
+    <button type="button" class="action-pill" data-cmd="insert orders">
+      <span class="pill-icon">⚡</span> wal insert
+    </button>
+    <button type="button" class="action-pill" data-cmd="toast-fix">
+      <span class="pill-icon">🍞</span> toast-fix
+    </button>
+    <button type="button" class="action-pill" data-cmd="lock-test">
+      <span class="pill-icon">🔒</span> lock-test
+    </button>
+    <button type="button" class="action-pill" data-cmd="benchmark">
+      <span class="pill-icon">📊</span> benchmark
+    </button>
+    <button type="button" class="action-pill" data-cmd="metrics">
+      <span class="pill-icon">ℹ️</span> metrics
+    </button>
+    <button type="button" class="action-pill" data-cmd="whoami">
+      <span class="pill-icon">👤</span> whoami
+    </button>
+    <button type="button" class="action-pill" data-cmd="help">
+      <span class="pill-icon">❓</span> help
+    </button>
+  </div>
+
+  <!-- Interactive CLI Command Prompt -->
+  <form id="cdc-cli-form" class="terminal-cli-bar" autocomplete="off">
+    <div class="cli-prompt-prefix" aria-hidden="true">
+      <span class="prompt-host">engineer@debezium</span><span class="prompt-sep">:</span><span class="prompt-dir">~</span><span class="prompt-sym">$</span>
+    </div>
+    <input
+      type="text"
+      id="cdc-cli-input"
+      class="cli-input"
+      placeholder="Type 'help', 'benchmark', 'toast-fix', 'lock-test'..."
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="CLI Command Input"
+    />
+    <button type="submit" class="cli-submit-btn" aria-label="Run command">
+      <span>Run</span>
+      <kbd class="cli-kbd">⏎</kbd>
+    </button>
+  </form>
+</div>
+
+<script>
+  function initCdcConsole() {
+    const container = document.getElementById("cdc-log-stream");
+    const cliForm = document.getElementById("cdc-cli-form") as HTMLFormElement | null;
+    const cliInput = document.getElementById("cdc-cli-input") as HTMLInputElement | null;
+    const toggleBtn = document.getElementById("btn-toggle-stream");
+    const clearBtn = document.getElementById("btn-clear-terminal");
+    const streamStatusPill = document.getElementById("stream-status-pill");
+    const streamStatusText = document.getElementById("stream-status-text");
+    const streamBtnLabel = document.getElementById("stream-btn-label");
+    const streamBtnIcon = document.getElementById("stream-btn-icon");
+    const actionPills = document.querySelectorAll(".action-pill");
+
+    if (!container || !cliInput || !cliForm) return;
+
+    let isStreaming = true;
+    let streamTimer: any = null;
+    let lsnCounter = 0x16b3200;
+
+    const history: string[] = [];
+    let historyIdx = -1;
+
+    const getFormattedTime = () => {
+      const now = new Date();
+      return `${now.getHours().toString().padStart(2, "0")}:${now
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}.${now
+        .getMilliseconds()
+        .toString()
+        .padStart(3, "0")}`;
+    };
+
+    const nextLSN = () => {
+      lsnCounter += Math.floor(Math.random() * 256) + 16;
+      return "0/" + lsnCounter.toString(16).toUpperCase();
+    };
+
+    // Authentic Terminal Syntax Highlighter
+    const highlightSyntax = (raw: string) => {
+      let s = raw;
+      // Highlight LSN e.g. LSN 0/16B45D8
+      s = s.replace(/LSN ([0-9A-F/]+)/g, '<span class="log-lsn">LSN $1</span>');
+      // Highlight tables e.g. 'public.orders'
+      s = s.replace(/'(public\.[a-z0-9_]+|orders|inventory)'/g, '<span class="log-table">\'$1\'</span>');
+      // Highlight operations
+      s = s.replace(/\bop=(INSERT|UPDATE|DELETE)\b/g, '<span class="log-op">op=$1</span>');
+      // Highlight currency
+      s = s.replace(/(\$[0-9]+\.[0-9]{2})/g, '<span class="log-money">$1</span>');
+      // Highlight HTTP status
+      s = s.replace(/HTTP (202 Accepted|200 OK)/g, '<span class="log-http">HTTP $1</span>');
+      // Highlight Schema
+      s = s.replace(/Avro Schema (v[0-9.]+)/g, '<span class="log-schema">Avro Schema $1</span>');
+      // Highlight Partitions
+      s = s.replace(/\bpartition ([0-9]+)\b/g, '<span class="log-partition">partition $1</span>');
+      // Highlight ACKs
+      s = s.replace(/\[(ACK[ 0-9ms]*)\]/g, '<span class="log-ack">[$1]</span>');
+      // Highlight slot
+      s = s.replace(/'(debezium_cdc_active)'/g, '<span class="log-slot">\'$1\'</span>');
+      return s;
+    };
+
+    const appendRow = (tag: string, tagClass: string, text: string, isEcho = false) => {
+      const row = document.createElement("div");
+      row.className = "log-row";
+      if (isEcho) row.classList.add("log-row-echo");
+
+      const timeSpan = isEcho ? "" : `<span class="log-time">${getFormattedTime()}</span>`;
+      const tagSpan = tag ? `<span class="log-tag ${tagClass}">[${tag}]</span>` : "";
+      const formattedText = isEcho ? text : highlightSyntax(text);
+
+      row.innerHTML = `
+        ${timeSpan}
+        ${tagSpan}
+        <span class="log-msg">${formattedText}</span>
+      `;
+
+      container.appendChild(row);
+
+      const rows = container.querySelectorAll(".log-row");
+      if (rows.length > 60) {
+        rows[0].remove();
+      }
+
+      container.scrollTop = container.scrollHeight;
+    };
+
+    // Authentic CDC Terminal Event Stream
+    const eventPool = [
+      {
+        tag: "WAL",
+        tagClass: "tag-wal",
+        getText: () => `LSN ${nextLSN()} · table 'public.orders' op=INSERT id=${Math.floor(Math.random() * 90000 + 10000)} total=$${(Math.random() * 400 + 20).toFixed(2)}`,
+      },
+      {
+        tag: "DISCOVER",
+        tagClass: "tag-discover",
+        getText: () => `Quarkus HostAgent heartbeat: HTTP 202 Accepted · health=UP · latency=${Math.floor(Math.random() * 7 + 4)}ms`,
+      },
+      {
+        tag: "KAFKA",
+        tagClass: "tag-kafka",
+        getText: () => `Avro Schema v3.1 → topic 'dbserver1.inventory.orders' partition ${Math.floor(Math.random() * 4)} [ACK]`,
+      },
+      {
+        tag: "LOCK",
+        tagClass: "tag-lock",
+        getText: () => "Sorted PESSIMISTIC_WRITE lock acquired: SHA256(deployment_id) · 0 deadlock cycles",
+      },
+      {
+        tag: "WAL",
+        tagClass: "tag-wal",
+        getText: () => `LSN ${nextLSN()} · PostgreSQL replication slot active · committed to WAL buffer`,
+      },
+      {
+        tag: "KAFKA",
+        tagClass: "tag-kafka",
+        getText: () => "Consumer group 'conductor-events' lag: 0 records across all 4 partitions",
+      },
+    ];
+
+    const startStream = () => {
+      if (streamTimer) clearInterval(streamTimer);
+      streamTimer = setInterval(() => {
+        if (!isStreaming) return;
+        const item = eventPool[Math.floor(Math.random() * eventPool.length)];
+        appendRow(item.tag, item.tagClass, item.getText());
+      }, 3200);
+    };
+
+    startStream();
+
+    const setStreamingState = (active: boolean) => {
+      isStreaming = active;
+      if (active) {
+        if (streamStatusPill) streamStatusPill.className = "status-indicator status-live";
+        if (streamStatusText) streamStatusText.textContent = "STREAMING";
+        if (streamBtnLabel) streamBtnLabel.textContent = "Pause";
+        if (streamBtnIcon) streamBtnIcon.textContent = "⏸";
+        appendRow("STREAM", "tag-discover", "Live telemetry stream resumed.");
+      } else {
+        if (streamStatusPill) streamStatusPill.className = "status-indicator status-paused";
+        if (streamStatusText) streamStatusText.textContent = "PAUSED";
+        if (streamBtnLabel) streamBtnLabel.textContent = "Resume";
+        if (streamBtnIcon) streamBtnIcon.textContent = "▶";
+        appendRow("STREAM", "tag-kafka", "Live telemetry stream paused by user.");
+      }
+    };
+
+    toggleBtn?.addEventListener("click", () => setStreamingState(!isStreaming));
+
+    const clearOutput = () => {
+      const banner = container.querySelector(".terminal-banner");
+      container.innerHTML = "";
+      if (banner) container.appendChild(banner);
+      appendRow("SYSTEM", "tag-system", "Terminal buffer cleared. Ready for commands.");
+    };
+
+    clearBtn?.addEventListener("click", clearOutput);
+
+    // Interactive CLI Command Runner
+    const runCommand = (rawInput: string) => {
+      const cmdStr = rawInput.trim();
+      if (!cmdStr) return;
+
+      history.push(cmdStr);
+      historyIdx = history.length;
+
+      appendRow("", "", `<span class="cmd-echo-sym">$</span> <strong class="cmd-echo-text">${cmdStr}</strong>`, true);
+
+      const parts = cmdStr.split(/\s+/);
+      const main = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(" ");
+
+      switch (main) {
+        case "help":
+          appendRow("HELP", "tag-help", "<b>Available CLI Commands:</b>");
+          appendRow("HELP", "tag-help", "• <code>insert [table]</code>: Inject simulated PostgreSQL WAL transaction");
+          appendRow("HELP", "tag-help", "• <code>toast-fix</code>: Run Debezium DBZ-8045 PostgreSQL TOAST pointer mitigation test");
+          appendRow("HELP", "tag-help", "• <code>lock-test</code>: Simulate sorted pessimistic write lock acquisition (0 deadlocks)");
+          appendRow("HELP", "tag-help", "• <code>benchmark</code>: Run 10,000 evt/sec throughput & latency stress test");
+          appendRow("HELP", "tag-help", "• <code>metrics</code>: Display Quarkus Native memory, lag, and replication slot status");
+          appendRow("HELP", "tag-help", "• <code>stream [on|off]</code>: Toggle live background CDC telemetry stream");
+          appendRow("HELP", "tag-help", "• <code>whoami / stats</code>: Display Divyanshu Kumar track record & GSoC scholar highlights");
+          appendRow("HELP", "tag-help", "• <code>clear</code>: Clear terminal buffer");
+          break;
+
+        case "insert":
+        case "wal":
+          {
+            const table = arg || "orders";
+            const id = Math.floor(Math.random() * 90000 + 10000);
+            const lsn = nextLSN();
+            appendRow("WAL", "tag-wal", `<b>POSTGRESQL WAL</b>: Captured TX on 'public.${table}' · LSN ${lsn}`);
+            setTimeout(() => {
+              appendRow("DEBEZIUM", "tag-discover", `Parsed pg_logical row change · Table: '${table}' · ID: ${id} · op=INSERT`);
+            }, 100);
+            setTimeout(() => {
+              appendRow("KAFKA", "tag-kafka", `Serialized with Avro Schema v3.1 → topic 'dbserver1.${table}' partition 2 [ACK 12ms]`);
+            }, 250);
+          }
+          break;
+
+        case "toast-fix":
+          appendRow("TOAST", "tag-toast", "<b>[DBZ-8045] Simulating PostgreSQL Out-of-Line TOAST Update...</b>");
+          setTimeout(() => {
+            appendRow("TOAST", "tag-toast", "Column 'metadata_json' (> 2KB) stored in pg_toast_16402 · REPLICA IDENTITY: DEFAULT");
+          }, 150);
+          setTimeout(() => {
+            appendRow("DEBEZIUM", "tag-discover", "Postgres logical decoding returned unchanged TOAST pointer (NULL replacement)");
+          }, 350);
+          setTimeout(() => {
+            appendRow("MITIGATE", "tag-lock", "<b>Mitigating</b>: Hydrating cached column state from prior replica image...");
+          }, 550);
+          setTimeout(() => {
+            appendRow("PASS", "tag-pass", "<b>✔ VERIFIED</b>: Zero schema corruption. 100% data integrity preserved across WAL stream.");
+          }, 750);
+          break;
+
+        case "lock-test":
+          appendRow("LOCK", "tag-lock", "<b>Simulating Concurrency: 500 concurrent worker transactions...</b>");
+          setTimeout(() => {
+            appendRow("LOCK", "tag-lock", "Applying sorted hash acquisition: ORDER BY SHA256(deployment_id) ASC");
+          }, 150);
+          setTimeout(() => {
+            appendRow("CONCURRENCY", "tag-discover", "Wait-for-graph cycle analysis running across 4 cluster nodes...");
+          }, 400);
+          setTimeout(() => {
+            appendRow("PASS", "tag-pass", "<b>✔ ZERO DEADLOCKS</b>: 2,000 transactions committed · p50: 0.9ms · p99: 2.3ms");
+          }, 650);
+          break;
+
+        case "benchmark":
+          appendRow("BENCH", "tag-bench", "<b>[STRESS-TEST] Launching 10,000 event CDC ingestion benchmark...</b>");
+          setTimeout(() => {
+            appendRow("BENCH", "tag-bench", "[████████████████████████] 10,000 / 10,000 events processed in 684ms");
+          }, 400);
+          setTimeout(() => {
+            appendRow("PASS", "tag-pass", "<b>Throughput: 14,619 events/sec</b> · WAL latency: 0.71ms · Dropped: 0 · CPU: 14%");
+          }, 650);
+          break;
+
+        case "metrics":
+          appendRow("METRICS", "tag-metrics", "<b>Runtime Telemetry Snapshot:</b>");
+          appendRow("METRICS", "tag-metrics", "• Daemon: HostAgent Quarkus 3.8.4 (Native Binary)");
+          appendRow("METRICS", "tag-metrics", "• Resident Memory (RSS): 34.2 MB (vs 320 MB standard JVM)");
+          appendRow("METRICS", "tag-metrics", `• Active Slot: 'debezium_cdc_active' · LSN '${nextLSN()}'`);
+          appendRow("METRICS", "tag-metrics", "• Kafka Consumer Lag: 0 records across all partitions");
+          appendRow("METRICS", "tag-metrics", "• Target Uptime: 99.99% · Zero-downtime rolling restart");
+          break;
+
+        case "stream":
+          if (arg === "off" || arg === "pause") {
+            setStreamingState(false);
+          } else if (arg === "on" || arg === "resume") {
+            setStreamingState(true);
+          } else {
+            setStreamingState(!isStreaming);
+          }
+          break;
+
+        case "whoami":
+        case "stats":
+          appendRow("WHOAMI", "tag-whoami", "<b>Divyanshu Kumar · Distributed Systems & Software Engineer</b>");
+          appendRow("WHOAMI", "tag-whoami", "• 2× Google Summer of Code Scholar (MIT App Inventor, Debezium / Red Hat)");
+          appendRow("WHOAMI", "tag-whoami", "• 26 merged pull requests across 13 open source organizations");
+          appendRow("WHOAMI", "tag-whoami", "• Core Stack: Java 21, Go, TS, Quarkus, Kafka, Debezium, PostgreSQL, Ansible");
+          appendRow("WHOAMI", "tag-whoami", "• Email: kumardivyanshu118@gmail.com · GitHub: github.com/d1vyanshukumar");
+          break;
+
+        case "clear":
+          clearOutput();
+          break;
+
+        default:
+          appendRow("ERROR", "tag-error", `Command not recognized: '${cmdStr}'. Type <code>help</code> for available commands.`);
+      }
+    };
+
+    cliForm.onsubmit = (e) => {
+      e.preventDefault();
+      const val = cliInput.value;
+      cliInput.value = "";
+      runCommand(val);
+    };
+
+    cliInput.onkeydown = (e) => {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (history.length > 0 && historyIdx > 0) {
+          historyIdx--;
+          cliInput.value = history[historyIdx];
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (historyIdx < history.length - 1) {
+          historyIdx++;
+          cliInput.value = history[historyIdx];
+        } else {
+          historyIdx = history.length;
+          cliInput.value = "";
+        }
+      } else if (e.key === "l" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        clearOutput();
+      }
+    };
+
+    actionPills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        const cmd = pill.getAttribute("data-cmd");
+        if (cmd) {
+          cliInput.value = cmd;
+          pill.classList.add("pill-active");
+          setTimeout(() => pill.classList.remove("pill-active"), 200);
+          runCommand(cmd);
+        }
+      });
+    });
+  }
+
+  initCdcConsole();
+  document.addEventListener("astro:page-load", initCdcConsole);
+</script>
+
+<style>
+  .cdc-console-wrapper {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    border: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.12));
+    box-shadow: var(--shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.12)), 0 0 28px rgba(178, 61, 21, 0.08);
+    font-family: var(--font-mono);
+    background: var(--color-terminal-bg, #FDF9F0);
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  /* Header */
+  .terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background: var(--color-terminal-header, #EFE4D0);
+    border-bottom: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.1));
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-red { background: #FF5F56; }
+  .dot-yellow { background: #FFBD2E; }
+  .dot-green { background: #27C93F; }
+
+  .terminal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .terminal-cmd {
+    color: var(--color-terminal-text, #23180F);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-size: 0.8125rem;
+  }
+
+  .terminal-runtime {
+    color: var(--color-terminal-muted, #5C4B3A);
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+  }
+
+  .status-live {
+    background: rgba(39, 201, 63, 0.15);
+    color: #15803D;
+    border: 1px solid rgba(39, 201, 63, 0.35);
+  }
+
+  :global([data-theme="after-hours"]) .status-live {
+    background: rgba(61, 220, 132, 0.16);
+    color: #3DDC84;
+    border-color: rgba(61, 220, 132, 0.4);
+  }
+
+  .status-paused {
+    background: rgba(245, 158, 11, 0.15);
+    color: #B45309;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+
+  :global([data-theme="after-hours"]) .status-paused {
+    background: rgba(251, 191, 36, 0.16);
+    color: #FBBF24;
+    border-color: rgba(251, 191, 36, 0.4);
+  }
+
+  .stream-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    animation: beaconPulse 1.8s infinite;
+  }
+
+  @keyframes beaconPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+  }
+
+  .header-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.45rem;
+    background: var(--color-surface, #FAF2E3);
+    color: var(--color-terminal-text, #23180F);
+    border: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.12));
+    font-size: 0.6875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    transition: all 0.15s ease;
+  }
+
+  .header-action-btn:hover {
+    background: var(--color-accent-subtle, rgba(178, 61, 21, 0.1));
+    border-color: var(--color-accent, #B23D15);
+    color: var(--color-accent, #B23D15);
+    transform: translateY(-1px);
+  }
+
+  /* Body */
+  .terminal-body {
+    padding: 1.15rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    min-height: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    background: var(--color-terminal-bg, #FDF9F0);
+    scroll-behavior: smooth;
+    transition: background 0.25s ease;
+  }
+
+  .terminal-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .banner-line-title {
+    color: var(--color-accent, #B23D15);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .banner-line-sub {
+    color: var(--color-terminal-muted, #5C4B3A);
+  }
+
+  .banner-line-sub .slot-hl {
+    color: #2563EB;
+    font-weight: 600;
+  }
+
+  :global([data-theme="after-hours"]) .banner-line-sub .slot-hl {
+    color: #38BDF8;
+  }
+
+  .banner-divider {
+    height: 1px;
+    background: var(--color-terminal-border, rgba(0, 0, 0, 0.1));
+    margin-top: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Shortcuts Bar */
+  .cli-shortcuts-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--color-terminal-header, #EFE4D0);
+    border-top: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.08));
+    border-bottom: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.08));
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .cli-shortcuts-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shortcuts-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-terminal-muted, #5C4B3A);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  .action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    background: var(--color-terminal-bg, #FDF9F0);
+    border: 1px solid var(--color-terminal-border, rgba(0, 0, 0, 0.12));
+    color: var(--color-terminal-text, #23180F);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+
+  .action-pill:hover {
+    background: var(--color-accent, #B23D15);
+    color: white;
+    border-color: var(--color-accent, #B23D15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(178, 61, 21, 0.25);
+  }
+
+  .action-pill.pill-active {
+    transform: scale(0.95);
+  }
+
+  .pill-icon {
+    font-size: 0.75rem;
+  }
+
+  /* Interactive CLI Prompt Bar */
+  .terminal-cli-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 1.25rem;
+    background: var(--color-terminal-bg, #FDF9F0);
+    gap: 0.6rem;
+    transition: background 0.25s ease;
+  }
+
+  .cli-prompt-prefix {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .prompt-host {
+    color: var(--color-accent, #B23D15);
+  }
+
+  .prompt-sep {
+    color: var(--color-terminal-muted, #5C4B3A);
+  }
+
+  .prompt-dir {
+    color: #2563EB;
+  }
+
+  :global([data-theme="after-hours"]) .prompt-dir {
+    color: #38BDF8;
+  }
+
+  .prompt-sym {
+    color: var(--color-open-to-work, #1B7A2B);
+    margin-left: 0.2rem;
+  }
+
+  .cli-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-terminal-text, #23180F);
+    caret-color: var(--color-accent, #B23D15);
+  }
+
+  .cli-input::placeholder {
+    color: var(--color-terminal-muted, #5C4B3A);
+    opacity: 0.65;
+    font-weight: 400;
+  }
+
+  .cli-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.45rem;
+    background: var(--color-accent, #B23D15);
+    color: white;
+    border: none;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .cli-submit-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(178, 61, 21, 0.3);
+  }
+
+  .cli-kbd {
+    font-size: 0.6875rem;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 640px) {
+    .terminal-header {
+      padding: 0.6rem 0.85rem;
+    }
+    .terminal-body {
+      padding: 0.85rem 0.95rem;
+      font-size: 0.75rem;
+      min-height: 12rem;
+    }
+    .terminal-cli-bar {
+      padding: 0.5rem 0.85rem;
+    }
+    .cli-prompt-prefix {
+      display: none;
+    }
+    .shortcuts-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .terminal-header {
+      padding: 0.5rem 0.75rem;
+      gap: 0.4rem;
+    }
+    .terminal-cmd {
+      max-width: 145px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+    .terminal-runtime {
+      display: none;
+    }
+    .header-action-btn {
+      padding: 0.2rem 0.45rem;
+      font-size: 0.625rem;
+    }
+    .terminal-body {
+      padding: 0.75rem 0.75rem;
+      font-size: 0.72rem;
+      min-height: 11rem;
+    }
+    .cli-submit-btn {
+      padding: 0.3rem 0.55rem;
+      font-size: 0.6875rem;
+    }
+    .cli-kbd {
+      display: none;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .terminal-cmd {
+      max-width: 110px;
+    }
+    .terminal-body {
+      padding: 0.65rem 0.6rem;
+    }
+  }
+</style>
+
+<!-- Global Styles for Real Monospace ANSI Terminal Font Highlighting -->
+<style is:global>
+  @media (max-width: 480px) {
+    .cdc-console-wrapper .log-row {
+      font-size: 0.75rem !important;
+      gap: 0.35rem !important;
+    }
+    .cdc-console-wrapper .log-time {
+      font-size: 0.6875rem !important;
+    }
+  }
+
+  .cdc-console-wrapper .log-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    word-break: break-all;
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    font-size: 0.8125rem;
+    animation: rowSlideIn 0.12s ease-out;
+  }
+
+  @keyframes rowSlideIn {
+    from { opacity: 0; transform: translateY(-2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .cdc-console-wrapper .log-row-echo {
+    padding: 0.15rem 0;
+    margin-top: 0.2rem;
+  }
+
+  .cdc-console-wrapper .cmd-echo-sym {
+    color: var(--color-accent, #B23D15);
+    font-weight: 700;
+    margin-right: 0.35rem;
+  }
+
+  .cdc-console-wrapper .cmd-echo-text {
+    color: var(--color-terminal-text, #23180F);
+    font-weight: 700;
+  }
+
+  .cdc-console-wrapper .log-time {
+    color: var(--color-terminal-muted, #5C4B3A);
+    font-weight: 500;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  /* Authentic Terminal Tag - PURE FONT HIGHLIGHT ONLY (No pills, no boxes, no borders) */
+  .cdc-console-wrapper .log-tag {
+    font-weight: 700;
+    font-size: 0.8125rem;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    flex-shrink: 0;
+    letter-spacing: 0;
+    display: inline;
+  }
+
+  .cdc-console-wrapper .log-msg {
+    color: var(--color-terminal-text, #23180F);
+    font-weight: 400;
+  }
+
+  .cdc-console-wrapper .log-msg b,
+  .cdc-console-wrapper .log-msg strong {
+    font-weight: 700;
+  }
+
+  .cdc-console-wrapper .log-msg code {
+    font-family: var(--font-mono);
+    padding: 0.05rem 0.25rem;
+    border-radius: 0.2rem;
+    background: var(--color-accent-subtle);
+    color: var(--color-accent);
+    font-size: 0.75rem;
+  }
+
+  /* ============================================================
+     AUTHENTIC ANSI TERMINAL COLOR PALETTE (Font Highlights Only)
+     ============================================================ */
+
+  /* --- 1. [WAL] (ANSI Red) --- */
+  /* Dawn (Warm) */
+  [data-theme="dawn"] .cdc-console-wrapper .tag-wal,
+  .cdc-console-wrapper .tag-wal {
+    color: #C5221F !important;
+  }
+  /* Daylight (Light) */
+  [data-theme="daylight"] .cdc-console-wrapper .tag-wal {
+    color: #DC2626 !important;
+  }
+  /* After-Hours (Dark) */
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-wal {
+    color: #FF5436 !important;
+  }
+
+  /* --- 2. [DISCOVER] & [SYSTEM] (ANSI Magenta / Blue) --- */
+  /* Dawn (Warm) */
+  [data-theme="dawn"] .cdc-console-wrapper .tag-discover,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-system,
+  .cdc-console-wrapper .tag-discover,
+  .cdc-console-wrapper .tag-system {
+    color: #4338CA !important;
+  }
+  /* Daylight (Light) */
+  [data-theme="daylight"] .cdc-console-wrapper .tag-discover,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-system {
+    color: #4F46E5 !important;
+  }
+  /* After-Hours (Dark) */
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-discover,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-system {
+    color: #818CF8 !important;
+  }
+
+  /* --- 3. [KAFKA] & [TOAST] (ANSI Yellow / Amber) --- */
+  /* Dawn (Warm) */
+  [data-theme="dawn"] .cdc-console-wrapper .tag-kafka,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-toast,
+  .cdc-console-wrapper .tag-kafka,
+  .cdc-console-wrapper .tag-toast {
+    color: #B45309 !important;
+  }
+  /* Daylight (Light) */
+  [data-theme="daylight"] .cdc-console-wrapper .tag-kafka,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-toast {
+    color: #D97706 !important;
+  }
+  /* After-Hours (Dark) */
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-kafka,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-toast {
+    color: #FBBF24 !important;
+  }
+
+  /* --- 4. [LOCK] & [PASS] & [MITIGATE] (ANSI Green) --- */
+  /* Dawn (Warm) */
+  [data-theme="dawn"] .cdc-console-wrapper .tag-lock,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-pass,
+  .cdc-console-wrapper .tag-lock,
+  .cdc-console-wrapper .tag-pass {
+    color: #15803D !important;
+  }
+  /* Daylight (Light) */
+  [data-theme="daylight"] .cdc-console-wrapper .tag-lock,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-pass {
+    color: #16A34A !important;
+  }
+  /* After-Hours (Dark) */
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-lock,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-pass {
+    color: #3DDC84 !important;
+  }
+
+  /* --- 5. [BENCH] & [METRICS] & [HELP] & [WHOAMI] (ANSI Cyan) --- */
+  /* Dawn (Warm) */
+  [data-theme="dawn"] .cdc-console-wrapper .tag-bench,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-metrics,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-help,
+  [data-theme="dawn"] .cdc-console-wrapper .tag-whoami,
+  .cdc-console-wrapper .tag-bench,
+  .cdc-console-wrapper .tag-metrics,
+  .cdc-console-wrapper .tag-help,
+  .cdc-console-wrapper .tag-whoami {
+    color: #0E7490 !important;
+  }
+  /* Daylight (Light) */
+  [data-theme="daylight"] .cdc-console-wrapper .tag-bench,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-metrics,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-help,
+  [data-theme="daylight"] .cdc-console-wrapper .tag-whoami {
+    color: #0284C7 !important;
+  }
+  /* After-Hours (Dark) */
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-bench,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-metrics,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-help,
+  [data-theme="after-hours"] .cdc-console-wrapper .tag-whoami {
+    color: #38BDF8 !important;
+  }
+
+  /* --- 6. [ERROR] (Bright Red Font) --- */
+  .cdc-console-wrapper .tag-error {
+    color: #EF4444 !important;
+    font-weight: 700;
+  }
+
+  /* --- Real In-line Terminal Monospace Tokens (Font Colors Only) --- */
+  .cdc-console-wrapper .log-lsn {
+    color: var(--color-accent, #B23D15);
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-lsn {
+    color: #FF7A62;
+  }
+
+  .cdc-console-wrapper .log-table {
+    color: #2563EB;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-table {
+    color: #60A5FA;
+  }
+
+  .cdc-console-wrapper .log-op {
+    color: #15803D;
+    font-weight: 700;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-op {
+    color: #3DDC84;
+  }
+
+  .cdc-console-wrapper .log-money {
+    color: #B45309;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-money {
+    color: #FBBF24;
+  }
+
+  .cdc-console-wrapper .log-http {
+    color: #15803D;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-http {
+    color: #3DDC84;
+  }
+
+  .cdc-console-wrapper .log-schema {
+    color: #7C3AED;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-schema {
+    color: #C084FC;
+  }
+
+  .cdc-console-wrapper .log-partition {
+    color: #0E7490;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-partition {
+    color: #38BDF8;
+  }
+
+  .cdc-console-wrapper .log-ack {
+    color: #15803D;
+    font-weight: 700;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-ack {
+    color: #3DDC84;
+  }
+
+  .cdc-console-wrapper .log-slot {
+    color: #2563EB;
+    font-weight: 600;
+  }
+  [data-theme="after-hours"] .cdc-console-wrapper .log-slot {
+    color: #38BDF8;
+  }
+</style>
