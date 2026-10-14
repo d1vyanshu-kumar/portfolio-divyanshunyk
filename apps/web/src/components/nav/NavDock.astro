@@ -1,0 +1,1572 @@
+---
+const navItems = [
+  { label: "Home", href: "/" },
+  { label: "Work", href: "/work" },
+  { label: "Stack", href: "/stack" },
+  { label: "Blog", href: "/blog" },
+  { label: "Contact", href: "/contact" },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="nav-header" id="nav-header" transition:persist="nav-header">
+  <nav class="nav-dock glass" aria-label="Main navigation">
+    <!-- Dino Runner Easter Egg & Home button -->
+    <button
+      type="button"
+      class="nav-logo dino-trigger-btn"
+      id="dino-nav-btn"
+      aria-label="Play Offline Chrome Dino runner easter egg. Click to play."
+      title="Offline Chrome Dino Runner (Click to Play!)"
+    >
+      <canvas id="mini-dino-canvas" class="mini-dino-canvas" width="88" height="88" aria-hidden="true"></canvas>
+      <span class="sr-only">Play Chrome Dino Runner</span>
+    </button>
+
+    <ul class="nav-links" role="list">
+      {navItems.map(({ label, href }) => (
+        <li>
+          <a
+            href={href}
+            class:list={["nav-link", { active: currentPath === href || (href !== "/" && currentPath.startsWith(href)) }]}
+            aria-current={currentPath === href || (href !== "/" && currentPath.startsWith(href)) ? "page" : undefined}
+          >
+            {label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="nav-actions">
+      <!-- Search / Command Palette trigger -->
+      <button
+        type="button"
+        class="cmd-trigger-btn"
+        data-open-command-palette
+        aria-label="Open command palette (Command + K)"
+        title="Open command palette (⌘K)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <kbd class="kbd-badge" aria-hidden="true">⌘K</kbd>
+      </button>
+
+      <!-- 3-State Theme Toggle -->
+      <button
+        id="theme-toggle"
+        class="theme-btn"
+        type="button"
+        aria-label="Cycle theme: after-hours, daylight, dawn"
+        title="Cycle theme: after-hours, daylight, dawn"
+      >
+        <!-- Sun icon (shown in daylight) -->
+        <svg class="theme-icon sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <!-- Moon icon (shown in after-hours) -->
+        <svg class="theme-icon moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <!-- Dawn / sunrise icon (shown in dawn) -->
+        <svg class="theme-icon dawn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17 18a5 5 0 0 0-10 0"></path>
+          <line x1="12" y1="9" x2="12" y2="2"></line>
+          <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+          <line x1="1" y1="18" x2="3" y2="18"></line>
+          <line x1="21" y1="18" x2="23" y2="18"></line>
+          <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+          <line x1="23" y1="22" x2="1" y2="22"></line>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Dino Runner Interactive Game Modal -->
+  <div id="dino-game-modal" class="dino-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-label="T-Rex Offline Runner Game">
+    <div class="dino-modal-card glass" id="dino-modal-card">
+      <div class="dino-modal-header">
+        <div class="dino-modal-title">
+          <span class="dino-radar-dot" aria-hidden="true"></span>
+          <span class="dino-title-text">T-REX RUNNER // OFFLINE MODE</span>
+        </div>
+        <div class="dino-score-board">
+          <span class="dino-hi-score" id="dino-hi-score">HI 00000</span>
+          <span class="dino-curr-score" id="dino-curr-score">00000</span>
+        </div>
+        <button type="button" class="dino-close-btn" id="dino-close-btn" aria-label="Close Dino Game (Escape)" title="Close (ESC)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <kbd class="dino-esc-badge" aria-hidden="true">ESC</kbd>
+        </button>
+      </div>
+
+      <div class="dino-canvas-wrapper">
+        <canvas id="main-dino-canvas" class="main-dino-canvas" width="600" height="180" aria-label="Interactive Dino Game Canvas. Press Space or tap to jump."></canvas>
+      </div>
+
+      <div class="dino-modal-footer">
+        <div class="dino-controls-hint">
+          <span><kbd class="dino-kbd">SPACE</kbd> or <kbd class="dino-kbd">&uarr;</kbd> Jump</span>
+          <span class="dino-hint-sep">&middot;</span>
+          <span><kbd class="dino-kbd">&darr;</kbd> Duck</span>
+          <span class="dino-hint-sep">&middot;</span>
+          <span>Click outside to exit</span>
+        </div>
+        <a href="/" class="dino-home-link" title="Return to Homepage">Home &rarr;</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // ==========================================
+  // Pixel Art Matrices
+  // ==========================================
+  const SPRITES = {
+    DINO_RUN_1: [
+      "            ########",
+      "           #########",
+      "           #.#######",
+      "           #########",
+      "           #########",
+      "           ######   ",
+      "           #########",
+      " #        ##########",
+      " ##      ###########",
+      " ###    ############",
+      " ####  ############ ",
+      " ################## ",
+      "  ################  ",
+      "   ##############   ",
+      "    ############    ",
+      "     ##########     ",
+      "      ###  ###      ",
+      "      ##    ##      ",
+      "      #      #      ",
+      "      ##            "
+    ],
+    DINO_RUN_2: [
+      "            ########",
+      "           #########",
+      "           #.#######",
+      "           #########",
+      "           #########",
+      "           ######   ",
+      "           #########",
+      " #        ##########",
+      " ##      ###########",
+      " ###    ############",
+      " ####  ############ ",
+      " ################## ",
+      "  ################  ",
+      "   ##############   ",
+      "    ############    ",
+      "     ##########     ",
+      "      ###  ###      ",
+      "      ##    ##      ",
+      "      #      #      ",
+      "             ##     "
+    ],
+    DINO_JUMP: [
+      "            ########",
+      "           #########",
+      "           #.#######",
+      "           #########",
+      "           #########",
+      "           ######   ",
+      "           #########",
+      " #        ##########",
+      " ##      ###########",
+      " ###    ############",
+      " ####  ############ ",
+      " ################## ",
+      "  ################  ",
+      "   ##############   ",
+      "    ############    ",
+      "     ##########     ",
+      "      ###  ###      ",
+      "      ##    ##      ",
+      "      #      #      ",
+      "      ##     ##     "
+    ],
+    DINO_DUCK_1: [
+      "                        ########",
+      "                       #########",
+      "                       #.#######",
+      "                       #########",
+      " #        ######################",
+      " ##      #######################",
+      " ###    ########################",
+      " ###############################",
+      "  ############################# ",
+      "   ###########################  ",
+      "    #########################   ",
+      "     #######################    ",
+      "      ###  ###                  ",
+      "      ##    ##                  ",
+      "      #                         ",
+      "      ##                        "
+    ],
+    DINO_DUCK_2: [
+      "                        ########",
+      "                       #########",
+      "                       #.#######",
+      "                       #########",
+      " #        ######################",
+      " ##      #######################",
+      " ###    ########################",
+      " ###############################",
+      "  ############################# ",
+      "   ###########################  ",
+      "    #########################   ",
+      "     #######################    ",
+      "      ###  ###                  ",
+      "      ##    ##                  ",
+      "             #                  ",
+      "             ##                 "
+    ],
+    DINO_CRASH: [
+      "            ########",
+      "           #########",
+      "           #X#######",
+      "           #########",
+      "           #########",
+      "           ######   ",
+      "           #########",
+      " #        ##########",
+      " ##      ###########",
+      " ###    ############",
+      " ####  ############ ",
+      " ################## ",
+      "  ################  ",
+      "   ##############   ",
+      "    ############    ",
+      "     ##########     ",
+      "      ###  ###      ",
+      "      ##    ##      ",
+      "      #      #      ",
+      "      ##     ##     "
+    ],
+    CACTUS_SMALL: [
+      "   ##   ",
+      "   ##   ",
+      " # ## # ",
+      " # ## # ",
+      " # #### ",
+      " #####  ",
+      "   ##   ",
+      "   ##   ",
+      "   ##   ",
+      "   ##   "
+    ],
+    CACTUS_DOUBLE: [
+      "   ##        ##   ",
+      "   ##        ##   ",
+      " # ## #    # ## # ",
+      " # ## #    # ## # ",
+      " # ####    # #### ",
+      " #####     #####  ",
+      "   ##        ##   ",
+      "   ##        ##   ",
+      "   ##        ##   ",
+      "   ##        ##   "
+    ],
+    CACTUS_TALL: [
+      "    ###    ",
+      "    ###    ",
+      "    ###    ",
+      " ## ### ## ",
+      " ## ### ## ",
+      " ## ### ## ",
+      " ######### ",
+      "  ######## ",
+      "    ###    ",
+      "    ###    ",
+      "    ###    ",
+      "    ###    "
+    ],
+    BIRD_1: [
+      "        ##    ",
+      "       ####   ",
+      "      ######  ",
+      "      ####### ",
+      "##############",
+      "   #########  ",
+      "    #######   ",
+      "     #####    ",
+      "      ###     "
+    ],
+    BIRD_2: [
+      "   #########  ",
+      "  ##########  ",
+      " #############",
+      "      ####### ",
+      "      ######  ",
+      "       ####   ",
+      "        ##    "
+    ],
+    CLOUD: [
+      "     #####      ",
+      "   #########    ",
+      "  ###########   ",
+      " #############  ",
+      "################",
+      "################"
+    ]
+  };
+
+  function drawPixelMatrix(
+    ctx: CanvasRenderingContext2D,
+    matrix: string[],
+    x: number,
+    y: number,
+    pixelSize: number,
+    color: string
+  ) {
+    ctx.fillStyle = color;
+    for (let r = 0; r < matrix.length; r++) {
+      const row = matrix[r];
+      for (let c = 0; c < row.length; c++) {
+        if (row[c] === "#" || row[c] === "X") {
+          ctx.fillRect(Math.round(x + c * pixelSize), Math.round(y + r * pixelSize), pixelSize, pixelSize);
+        }
+      }
+    }
+  }
+
+  // ==========================================
+  // Web Audio Synth for Retro 8-bit Sounds
+  // ==========================================
+  let audioCtx: AudioContext | null = null;
+  function getAudio() {
+    try {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioClass) audioCtx = new AudioClass();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    } catch (e) {}
+    return audioCtx;
+  }
+
+  function playSound(type: "jump" | "score" | "crash") {
+    try {
+      const ctx = getAudio();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      if (type === "jump") {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      } else if (type === "score") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(620, ctx.currentTime);
+        osc.frequency.setValueAtTime(900, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.22);
+      } else if (type === "crash") {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(260, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      }
+    } catch (e) {}
+  }
+
+  // ==========================================
+  // 1. Mini Auto-Playing Dino (Inside Nav Circle)
+  // ==========================================
+  let miniDinoAnimationId: number | null = null;
+
+  function initMiniDino() {
+    const canvas = document.getElementById("mini-dino-canvas") as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (miniDinoAnimationId) {
+      cancelAnimationFrame(miniDinoAnimationId);
+      miniDinoAnimationId = null;
+    }
+
+    const miniDino = {
+      x: 14,
+      y: 40,
+      baseY: 40,
+      vy: 0,
+      isJumping: false,
+      width: 20 * 1.3,
+      height: 20 * 1.3,
+    };
+
+    const miniCactus = {
+      x: 95,
+      y: 52,
+      width: 8 * 1.3,
+      height: 10 * 1.3,
+      speed: 2.1
+    };
+
+    let frame = 0;
+
+    function loop() {
+      if (!canvas || !ctx) return;
+      ctx.clearRect(0, 0, 88, 88);
+
+      // Circular clip so elements don't bleed outside the round button
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(44, 44, 42, 0, Math.PI * 2);
+      ctx.clip();
+
+      const groundY = 66;
+
+      // Ground line
+      ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.fillRect(4, groundY, 80, 1.5);
+
+      // Ground texture / pebbles scrolling
+      const pebbleOffset = (frame * 2.1) % 20;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+      for (let px = 8 - pebbleOffset; px < 80; px += 20) {
+        if (px >= 6 && px <= 78) {
+          ctx.fillRect(px, groundY + 4, 3, 1.5);
+        }
+      }
+
+      // Move mini cactus
+      miniCactus.x -= miniCactus.speed;
+      if (miniCactus.x < -18) {
+        miniCactus.x = 92 + Math.random() * 32;
+      }
+
+      // Auto-jump logic (computer automatically plays it)
+      const dist = miniCactus.x - (miniDino.x + miniDino.width);
+      if (dist < 14 && !miniDino.isJumping && dist > -4) {
+        miniDino.vy = -7.6;
+        miniDino.isJumping = true;
+      }
+
+      if (miniDino.isJumping) {
+        miniDino.vy += 0.42;
+        miniDino.y += miniDino.vy;
+        if (miniDino.y >= miniDino.baseY) {
+          miniDino.y = miniDino.baseY;
+          miniDino.vy = 0;
+          miniDino.isJumping = false;
+        }
+      }
+
+      // Sprite selection
+      let sprite = SPRITES.DINO_JUMP;
+      if (!miniDino.isJumping) {
+        const leg = Math.floor(frame / 5) % 2;
+        sprite = leg === 0 ? SPRITES.DINO_RUN_1 : SPRITES.DINO_RUN_2;
+      }
+
+      // Draw Dino & Cactus in crisp white
+      drawPixelMatrix(ctx, sprite, miniDino.x, miniDino.y, 1.3, "#FFFFFF");
+      drawPixelMatrix(ctx, SPRITES.CACTUS_SMALL, miniCactus.x, miniCactus.y, 1.3, "#FFFFFF");
+
+      ctx.restore();
+      frame++;
+      miniDinoAnimationId = requestAnimationFrame(loop);
+    }
+
+    miniDinoAnimationId = requestAnimationFrame(loop);
+  }
+
+  // ==========================================
+  // 2. Full Interactive Dino Game Modal
+  // ==========================================
+  let mainGameAnimationId: number | null = null;
+  
+  interface Obstacle {
+    type: "cactus_small" | "cactus_double" | "cactus_tall" | "bird";
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    pixelSize: number;
+    sprite: string[];
+    matrix: string[];
+    birdFrame?: number;
+  }
+
+  function setupDinoGameModal() {
+    const triggerBtn = document.getElementById("dino-nav-btn");
+    const modalBackdrop = document.getElementById("dino-game-modal");
+    const closeBtn = document.getElementById("dino-close-btn");
+    const canvas = document.getElementById("main-dino-canvas") as HTMLCanvasElement | null;
+    const hiScoreEl = document.getElementById("dino-hi-score");
+    const currScoreEl = document.getElementById("dino-curr-score");
+
+    if (!triggerBtn || !modalBackdrop || !canvas || (triggerBtn as any).__dinoInitialized) return;
+    (triggerBtn as any).__dinoInitialized = true;
+
+    let highScore = parseInt(localStorage.getItem("dino_high_score") || "0", 10) || 0;
+    if (hiScoreEl) {
+      hiScoreEl.textContent = "HI " + String(highScore).padStart(5, "0");
+    }
+
+    // Game state
+    let state: "READY" | "PLAYING" | "GAMEOVER" = "READY";
+    let score = 0;
+    let speed = 6;
+    let frame = 0;
+    let lastObstacleSpawn = 0;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const groundY = 150;
+    const dino = {
+      x: 40,
+      y: groundY - 40,
+      baseY: groundY - 40,
+      vy: 0,
+      w: 40,
+      h: 40,
+      pixelSize: 2,
+      isJumping: false,
+      isDucking: false,
+    };
+
+    let obstacles: Obstacle[] = [];
+    let clouds: { x: number; y: number; speed: number }[] = [
+      { x: 120, y: 35, speed: 0.6 },
+      { x: 340, y: 25, speed: 0.4 },
+      { x: 520, y: 45, speed: 0.5 },
+    ];
+
+    function getThemeColors() {
+      const theme = document.documentElement.getAttribute("data-theme") || "dawn";
+      if (theme === "after-hours") {
+        return {
+          bg: "#0B0B0D",
+          text: "#F1F5F9",
+          accent: "#FF5436",
+          ground: "rgba(255, 255, 255, 0.2)",
+          cloud: "rgba(255, 255, 255, 0.15)",
+        };
+      } else if (theme === "daylight") {
+        return {
+          bg: "#FFFFFF",
+          text: "#1E293B",
+          accent: "#EA580C",
+          ground: "rgba(0, 0, 0, 0.2)",
+          cloud: "rgba(0, 0, 0, 0.12)",
+        };
+      } else {
+        // dawn (default)
+        return {
+          bg: "#FDF9F0",
+          text: "#23180F",
+          accent: "#B23D15",
+          ground: "rgba(43, 33, 24, 0.25)",
+          cloud: "rgba(43, 33, 24, 0.15)",
+        };
+      }
+    }
+
+    function resetGame() {
+      score = 0;
+      speed = 6.2;
+      frame = 0;
+      lastObstacleSpawn = 0;
+      obstacles = [];
+      dino.y = dino.baseY;
+      dino.vy = 0;
+      dino.isJumping = false;
+      dino.isDucking = false;
+      state = "PLAYING";
+      playSound("jump");
+    }
+
+    function jump() {
+      if (state === "READY") {
+        resetGame();
+        return;
+      }
+      if (state === "GAMEOVER") {
+        resetGame();
+        return;
+      }
+      if (state === "PLAYING" && !dino.isJumping && !dino.isDucking) {
+        dino.vy = -12.4;
+        dino.isJumping = true;
+        playSound("jump");
+      }
+    }
+
+    function setDuck(ducking: boolean) {
+      if (state === "PLAYING" && !dino.isJumping) {
+        dino.isDucking = ducking;
+      }
+    }
+
+    function spawnObstacle() {
+      const minDistance = Math.max(70, 110 - Math.floor(speed * 3));
+      if (frame - lastObstacleSpawn < minDistance) return;
+
+      const types: ("cactus_small" | "cactus_double" | "cactus_tall" | "bird")[] = ["cactus_small", "cactus_double", "cactus_tall"];
+      if (score > 180) {
+        types.push("bird");
+      }
+
+      const type = types[Math.floor(Math.random() * types.length)];
+      lastObstacleSpawn = frame;
+
+      if (type === "cactus_small") {
+        obstacles.push({
+          type,
+          x: 610,
+          y: groundY - 20,
+          w: 8 * 2,
+          h: 10 * 2,
+          pixelSize: 2,
+          sprite: SPRITES.CACTUS_SMALL,
+          matrix: SPRITES.CACTUS_SMALL,
+        });
+      } else if (type === "cactus_double") {
+        obstacles.push({
+          type,
+          x: 610,
+          y: groundY - 20,
+          w: 18 * 2,
+          h: 10 * 2,
+          pixelSize: 2,
+          sprite: SPRITES.CACTUS_DOUBLE,
+          matrix: SPRITES.CACTUS_DOUBLE,
+        });
+      } else if (type === "cactus_tall") {
+        obstacles.push({
+          type,
+          x: 610,
+          y: groundY - 26,
+          w: 11 * 2,
+          h: 13 * 2,
+          pixelSize: 2,
+          sprite: SPRITES.CACTUS_TALL,
+          matrix: SPRITES.CACTUS_TALL,
+        });
+      } else if (type === "bird") {
+        const altitudes = [groundY - 18, groundY - 34, groundY - 50];
+        const birdY = altitudes[Math.floor(Math.random() * altitudes.length)];
+        obstacles.push({
+          type,
+          x: 610,
+          y: birdY,
+          w: 14 * 2,
+          h: 9 * 2,
+          pixelSize: 2,
+          sprite: SPRITES.BIRD_1,
+          matrix: SPRITES.BIRD_1,
+          birdFrame: 0,
+        });
+      }
+    }
+
+    function checkCollision(obs: Obstacle): boolean {
+      const pad = 4;
+      const dinoBox = dino.isDucking
+        ? {
+            x: dino.x + pad,
+            y: groundY - 22 + pad,
+            w: 32 * 2 - pad * 2,
+            h: 11 * 2 - pad * 2,
+          }
+        : {
+            x: dino.x + pad,
+            y: dino.y + pad,
+            w: dino.w - pad * 2,
+            h: dino.h - pad * 2,
+          };
+
+      const obsBox = {
+        x: obs.x + pad,
+        y: obs.y + pad,
+        w: obs.w - pad * 2,
+        h: obs.h - pad * 2,
+      };
+
+      return (
+        dinoBox.x < obsBox.x + obsBox.w &&
+        dinoBox.x + dinoBox.w > obsBox.x &&
+        dinoBox.y < obsBox.y + obsBox.h &&
+        dinoBox.y + dinoBox.h > obsBox.y
+      );
+    }
+
+    function updateAndRender() {
+      if (!ctx || !canvas) return;
+      const colors = getThemeColors();
+
+      ctx.fillStyle = colors.bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Render clouds
+      ctx.fillStyle = colors.cloud;
+      clouds.forEach((cloud) => {
+        cloud.x -= cloud.speed;
+        if (cloud.x < -40) cloud.x = canvas.width + Math.random() * 50;
+        drawPixelMatrix(ctx, SPRITES.CLOUD, cloud.x, cloud.y, 2, colors.cloud);
+      });
+
+      // Ground Line
+      ctx.fillStyle = colors.ground;
+      ctx.fillRect(0, groundY, canvas.width, 2);
+
+      // Ground pebbles
+      const pebbleOffset = (frame * speed) % 24;
+      for (let px = -pebbleOffset; px < canvas.width; px += 24) {
+        ctx.fillRect(px, groundY + 4, 4, 2);
+      }
+
+      if (state === "PLAYING") {
+        score += 0.15;
+        speed = 6.2 + Math.min(score / 220, 6);
+
+        // Milestone score chime
+        if (Math.floor(score) > 0 && Math.floor(score) % 100 === 0 && Math.floor(score - 0.15) % 100 !== 0) {
+          playSound("score");
+        }
+
+        // Update score UI
+        if (currScoreEl) {
+          currScoreEl.textContent = String(Math.floor(score)).padStart(5, "0");
+        }
+        if (score > highScore) {
+          highScore = Math.floor(score);
+          localStorage.setItem("dino_high_score", String(highScore));
+          if (hiScoreEl) {
+            hiScoreEl.textContent = "HI " + String(highScore).padStart(5, "0");
+          }
+        }
+
+        // Dino Physics
+        if (dino.isJumping) {
+          dino.vy += 0.65;
+          dino.y += dino.vy;
+          if (dino.y >= dino.baseY) {
+            dino.y = dino.baseY;
+            dino.vy = 0;
+            dino.isJumping = false;
+          }
+        }
+
+        // Spawn obstacles
+        spawnObstacle();
+
+        // Update obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obs = obstacles[i];
+          obs.x -= speed;
+
+          if (obs.type === "bird") {
+            const flap = Math.floor(frame / 6) % 2;
+            obs.matrix = flap === 0 ? SPRITES.BIRD_1 : SPRITES.BIRD_2;
+          }
+
+          if (checkCollision(obs)) {
+            state = "GAMEOVER";
+            playSound("crash");
+          }
+
+          if (obs.x < -50) {
+            obstacles.splice(i, 1);
+          }
+        }
+      }
+
+      // Draw obstacles
+      obstacles.forEach((obs) => {
+        drawPixelMatrix(ctx, obs.matrix, obs.x, obs.y, obs.pixelSize, colors.text);
+      });
+
+      // Draw Dino
+      let dinoMatrix = SPRITES.DINO_JUMP;
+      let drawY = dino.y;
+
+      if (state === "GAMEOVER") {
+        dinoMatrix = SPRITES.DINO_CRASH;
+      } else if (dino.isDucking) {
+        const duckStep = Math.floor(frame / 5) % 2;
+        dinoMatrix = duckStep === 0 ? SPRITES.DINO_DUCK_1 : SPRITES.DINO_DUCK_2;
+        drawY = groundY - 32;
+      } else if (!dino.isJumping) {
+        const leg = Math.floor(frame / 5) % 2;
+        dinoMatrix = leg === 0 ? SPRITES.DINO_RUN_1 : SPRITES.DINO_RUN_2;
+      }
+
+      drawPixelMatrix(ctx, dinoMatrix, dino.x, drawY, dino.pixelSize, colors.text);
+
+      // Overlays
+      if (state === "READY") {
+        ctx.fillStyle = colors.text;
+        ctx.font = "bold 14px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("PRESS [SPACE] OR TAP TO START", canvas.width / 2, groundY - 60);
+      } else if (state === "GAMEOVER") {
+        ctx.fillStyle = colors.accent;
+        ctx.font = "bold 16px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("G A M E   O V E R", canvas.width / 2, groundY - 65);
+
+        ctx.fillStyle = colors.text;
+        ctx.font = "12px monospace";
+        ctx.fillText("PRESS [SPACE] OR TAP TO RETRY", canvas.width / 2, groundY - 42);
+      }
+
+      frame++;
+      mainGameAnimationId = requestAnimationFrame(updateAndRender);
+    }
+
+    // Keyboard controls
+    function handleKeyDown(e: KeyboardEvent) {
+      if (modalBackdrop && !modalBackdrop.classList.contains("open")) return;
+
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        e.preventDefault();
+        jump();
+      } else if (e.code === "ArrowDown" || e.code === "KeyS") {
+        e.preventDefault();
+        setDuck(true);
+      } else if (e.code === "Escape") {
+        e.preventDefault();
+        closeModal();
+      }
+    }
+
+    function handleKeyUp(e: KeyboardEvent) {
+      if (e.code === "ArrowDown" || e.code === "KeyS") {
+        setDuck(false);
+      }
+    }
+
+    function openModal() {
+      if (!modalBackdrop) return;
+      modalBackdrop.classList.add("open");
+      modalBackdrop.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
+
+      if (state === "READY" || state === "GAMEOVER") {
+        state = "READY";
+      }
+
+      if (!mainGameAnimationId) {
+        mainGameAnimationId = requestAnimationFrame(updateAndRender);
+      }
+    }
+
+    function closeModal() {
+      if (!modalBackdrop) return;
+      modalBackdrop.classList.remove("open");
+      modalBackdrop.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+
+      if (mainGameAnimationId) {
+        cancelAnimationFrame(mainGameAnimationId);
+        mainGameAnimationId = null;
+      }
+    }
+
+    // Click triggers
+    triggerBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal();
+    });
+
+    closeBtn?.addEventListener("click", closeModal);
+
+    // Click outside modal card to close
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) {
+        closeModal();
+      }
+    });
+
+    // Tap/Click on canvas to jump/start
+    canvas.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      jump();
+    });
+  }
+
+  // ==========================================
+  // Standard Nav & Theme Handlers
+  // ==========================================
+  function setupThemeToggle() {
+    const themeOrder = ["dawn", "daylight", "after-hours"] as const;
+    const toggle = document.getElementById("theme-toggle");
+
+    if (toggle) {
+      toggle.onclick = () => {
+        const current = (document.documentElement.getAttribute("data-theme") || "dawn") as (typeof themeOrder)[number];
+        const idx = themeOrder.indexOf(current);
+        const next = themeOrder[(idx + 1) % themeOrder.length];
+        
+        document.documentElement.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem("theme", next);
+        } catch (e) {}
+
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+          const colorMap: Record<string, string> = {
+            "dawn": "#F4EAD4",
+            "daylight": "#FFFFFF",
+            "after-hours": "#0B0B0D"
+          };
+          meta.setAttribute("content", colorMap[next] || "#F4EAD4");
+        }
+
+        window.dispatchEvent(new CustomEvent("theme-change", { detail: { theme: next } }));
+      };
+    }
+  }
+
+  function syncActiveNav() {
+    const rawPath = window.location.pathname;
+    const current = rawPath.replace(/\/+$/, "") || "/";
+    const links = document.querySelectorAll<HTMLAnchorElement>(".nav-dock .nav-link");
+
+    links.forEach((link) => {
+      const href = (link.getAttribute("href") || "").replace(/\/+$/, "") || "/";
+      const isActive =
+        href === "/"
+          ? current === "/"
+          : current === href || current.startsWith(href + "/");
+
+      if (isActive) {
+        link.classList.add("active");
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.classList.remove("active");
+        link.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  function bindLinkClicks() {
+    const links = document.querySelectorAll<HTMLAnchorElement>(".nav-dock .nav-link");
+    links.forEach((link) => {
+      if ((link as any).__hasActiveNavClick) return;
+      (link as any).__hasActiveNavClick = true;
+      link.addEventListener("click", () => {
+        links.forEach((l) => {
+          l.classList.remove("active");
+          l.removeAttribute("aria-current");
+        });
+        link.classList.add("active");
+        link.setAttribute("aria-current", "page");
+      });
+    });
+  }
+
+  function initAll() {
+    setupThemeToggle();
+    syncActiveNav();
+    bindLinkClicks();
+    initMiniDino();
+    setupDinoGameModal();
+  }
+
+  initAll();
+
+  document.addEventListener("astro:page-load", () => {
+    initAll();
+  });
+
+  window.addEventListener("popstate", syncActiveNav);
+</script>
+
+<style>
+  .nav-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-nav);
+    display: flex;
+    justify-content: center;
+    padding: var(--space-4) var(--container-pad);
+    pointer-events: none;
+  }
+
+  .nav-dock {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--radius-full);
+    pointer-events: auto;
+    transition: transform var(--duration-normal) var(--ease-out);
+    max-width: 36rem;
+    width: auto;
+  }
+
+  /* Dino Nav Button (replaces static DK) */
+  .nav-logo.dino-trigger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--duration-fast) var(--ease-spring), box-shadow var(--duration-fast) var(--ease-out);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .nav-logo.dino-trigger-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 16px var(--color-accent);
+  }
+
+  .mini-dino-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: var(--radius-full);
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted);
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+  }
+
+  .nav-link:hover {
+    color: var(--color-text);
+    background-color: var(--color-accent-subtle);
+  }
+
+  /* Frosted Glass Active Capsule */
+  .nav-link.active {
+    color: var(--color-text);
+    font-weight: var(--weight-semibold);
+    background-color: var(--color-surface-elevated);
+    border-color: var(--color-border-hover);
+    box-shadow:
+      0 4px 14px -2px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 0 var(--color-glass-highlight);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Glowing Accent Pip below active tab */
+  .nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+    animation: activeGlowPulse 2.4s ease-in-out infinite alternate;
+  }
+
+  @keyframes activeGlowPulse {
+    0% {
+      opacity: 0.75;
+      box-shadow: 0 0 4px var(--color-accent);
+    }
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 10px var(--color-accent);
+    }
+  }
+
+  .nav-link.active:hover {
+    color: var(--color-text);
+    background-color: var(--color-surface-elevated);
+    transform: translateY(-1px);
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    border-left: 1px solid var(--color-border);
+    padding-left: var(--space-2);
+    margin-left: var(--space-1);
+  }
+
+  .cmd-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 44px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-full);
+    color: var(--color-muted);
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .cmd-trigger-btn:hover {
+    color: var(--color-text);
+    background-color: var(--color-accent-subtle);
+  }
+
+  .kbd-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+    line-height: 1;
+  }
+
+  .theme-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: var(--radius-full);
+    color: var(--color-muted);
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .theme-btn:hover {
+    color: var(--color-text);
+    background-color: var(--color-accent-subtle);
+  }
+
+  /* Show/hide theme icons based on active theme */
+  .theme-icon { display: none; }
+  :global([data-theme="after-hours"]) .moon { display: block; }
+  :global([data-theme="daylight"]) .sun { display: block; }
+  :global([data-theme="dawn"]) .dawn-icon { display: block; }
+
+  /* ==========================================
+     Dino Game Modal Styles
+     ========================================== */
+  .dino-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    pointer-events: auto;
+  }
+
+  .dino-modal-backdrop.open {
+    display: flex;
+    animation: dinoFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes dinoFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .dino-modal-card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl, 20px);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 var(--color-glass-highlight);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+  }
+
+  .dino-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-elevated);
+    gap: 0.75rem;
+  }
+
+  .dino-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .dino-radar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-open-to-work);
+    box-shadow: 0 0 8px var(--color-open-to-work);
+    animation: radarPulse 1.8s infinite ease-in-out;
+  }
+
+  @keyframes radarPulse {
+    0%, 100% { opacity: 0.8; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  .dino-title-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-text);
+  }
+
+  .dino-score-board {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-left: auto;
+  }
+
+  .dino-hi-score {
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+  }
+
+  .dino-curr-score {
+    color: var(--color-text);
+  }
+
+  .dino-close-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-muted);
+    cursor: pointer;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    transition: all var(--duration-fast) var(--ease-out);
+  }
+
+  .dino-close-btn:hover {
+    color: var(--color-text);
+    background: var(--color-accent-subtle);
+    border-color: var(--color-border-hover);
+  }
+
+  .dino-esc-badge {
+    font-size: 0.625rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 3px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+  }
+
+  .dino-canvas-wrapper {
+    width: 100%;
+    background: var(--color-terminal-bg, var(--color-bg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    user-select: none;
+  }
+
+  .main-dino-canvas {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+    display: block;
+    image-rendering: pixelated;
+    cursor: pointer;
+  }
+
+  .dino-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1.25rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    background: var(--color-surface-elevated);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .dino-controls-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .dino-kbd {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    line-height: 1;
+  }
+
+  .dino-hint-sep {
+    opacity: 0.4;
+  }
+
+  .dino-home-link {
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .dino-home-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Mobile & Compact Screen Responsive Optimization */
+  @media (max-width: 540px) {
+    .nav-header {
+      padding: 0.625rem 0.75rem;
+    }
+    .nav-dock {
+      gap: 0.15rem;
+      padding: 0.25rem 0.35rem;
+      max-width: 100%;
+    }
+    .nav-logo.dino-trigger-btn {
+      min-width: 38px;
+      min-height: 38px;
+      width: 38px;
+      height: 38px;
+    }
+    .nav-links {
+      gap: 0.15rem;
+    }
+    .nav-link {
+      padding: 0 0.45rem;
+      font-size: var(--text-xs);
+      min-height: 36px;
+    }
+    .nav-link.active::after {
+      width: 10px;
+      bottom: 4px;
+    }
+    .nav-actions {
+      padding-left: 0.35rem;
+      margin-left: 0.2rem;
+      gap: 0.15rem;
+    }
+    .cmd-trigger-btn {
+      min-height: 36px;
+      padding: 0 0.35rem;
+    }
+    .kbd-badge {
+      display: none;
+    }
+    .theme-btn {
+      min-width: 36px;
+      min-height: 36px;
+    }
+    .dino-title-text {
+      display: none;
+    }
+    .dino-modal-backdrop {
+      padding: 0.5rem;
+    }
+    .dino-modal-header {
+      padding: 0.5rem 0.75rem;
+    }
+    .dino-modal-footer {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.6875rem;
+    }
+    .dino-controls-hint span:nth-child(3),
+    .dino-controls-hint span:nth-child(4),
+    .dino-controls-hint span:nth-child(5) {
+      display: none;
+    }
+  }
+
+  /* Compact Smartphones (iPhone SE / 375px - 414px) */
+  @media (max-width: 420px) {
+    .nav-header {
+      padding: 0.45rem 0.4rem;
+    }
+    .nav-dock {
+      gap: 0.1rem;
+      padding: 0.2rem 0.25rem;
+    }
+    .nav-logo.dino-trigger-btn {
+      min-width: 35px;
+      min-height: 35px;
+      width: 35px;
+      height: 35px;
+    }
+    .nav-links {
+      gap: 0.1rem;
+    }
+    .nav-link {
+      padding: 0 0.38rem;
+      font-size: 0.72rem;
+      min-height: 34px;
+    }
+    .nav-link.active::after {
+      width: 8px;
+      bottom: 3px;
+    }
+    .nav-actions {
+      padding-left: 0.25rem;
+      margin-left: 0.15rem;
+      gap: 0.1rem;
+    }
+    .cmd-trigger-btn {
+      min-height: 34px;
+      min-width: 34px;
+      padding: 0;
+      justify-content: center;
+    }
+    .theme-btn {
+      min-width: 34px;
+      min-height: 34px;
+    }
+  }
+
+  /* Ultra-Compact Screens (320px - 360px: iPhone SE 1st Gen / Folded Screens) */
+  @media (max-width: 360px) {
+    .nav-header {
+      padding: 0.35rem 0.25rem;
+    }
+    .nav-dock {
+      gap: 0.05rem;
+      padding: 0.15rem 0.2rem;
+    }
+    .nav-logo.dino-trigger-btn {
+      min-width: 32px;
+      min-height: 32px;
+      width: 32px;
+      height: 32px;
+    }
+    .nav-link {
+      padding: 0 0.28rem;
+      font-size: 0.6875rem;
+      min-height: 32px;
+    }
+    .cmd-trigger-btn {
+      min-width: 30px;
+      min-height: 30px;
+    }
+    .theme-btn {
+      min-width: 30px;
+      min-height: 30px;
+    }
+  }
+</style>
