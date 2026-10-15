@@ -1,0 +1,521 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import NavDock from "@/components/nav/NavDock.astro";
+import Footer from "@/components/footer/Footer.astro";
+import ArchitectureDiagram from "@/components/ui/ArchitectureDiagram.astro";
+import { caseStudies, type CaseStudy } from "@/data/case-studies";
+
+export function getStaticPaths() {
+  return caseStudies.map((study) => ({
+    params: { slug: study.slug },
+    props: { study },
+  }));
+}
+
+interface Props {
+  study: CaseStudy;
+}
+
+const { study } = Astro.props;
+---
+
+<BaseLayout
+  title={`${study.title} | Divyanshu Kumar`}
+  description={study.subtitle}
+>
+  <NavDock />
+
+  <main id="main-content" class="case-study-page">
+    <div class="container case-study-container">
+      <!-- Back navigation link -->
+      <a href="/work" class="back-link">
+        &larr; Back to all selected work
+      </a>
+
+      <!-- Header Header -->
+      <header class="study-header">
+        <div class="tags-row">
+          {study.tags.map((tag) => (
+            <span class="study-tag">{tag}</span>
+          ))}
+        </div>
+
+        <h1 class="study-title">{study.title}</h1>
+        <p class="study-subtitle">{study.subtitle}</p>
+
+        <div class="meta-strip">
+          <div class="meta-item">
+            <span class="meta-label">Organization</span>
+            <span class="meta-val">{study.org}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Role</span>
+            <span class="meta-val">{study.role}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Timeline</span>
+            <span class="meta-val">{study.period}</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Key Metrics Strip -->
+      <section class="metrics-section" aria-label="Key quantitative metrics">
+        <div class="metrics-grid">
+          {study.metrics.map(({ label, value }) => (
+            <div class="metric-card glass">
+              <span class="metric-val">{value}</span>
+              <span class="metric-lbl">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Flow Animation (if present, e.g. Debezium host discovery) -->
+      {study.flowSteps && (
+        <section class="flow-section" aria-label="Automated deployment flow">
+          <h2 class="section-heading">Provisioning Pipeline Flow</h2>
+          <div class="flow-track">
+            {study.flowSteps.map((step, idx) => (
+              <div class="flow-card glass">
+                <div class="flow-step-num">{step.step}</div>
+                <h3 class="flow-step-title">{step.title}</h3>
+                <p class="flow-step-detail">{step.detail}</p>
+                {idx < study.flowSteps!.length - 1 && (
+                  <span class="flow-arrow" aria-hidden="true">&rarr;</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Context Section -->
+      <section class="content-section" aria-label="Context and constraints">
+        <h2 class="section-heading">Context &amp; Engineering Challenge</h2>
+        <p class="section-prose">{study.context}</p>
+
+        <div class="constraint-box">
+          <div class="constraint-title">Hard Constraints</div>
+          <p class="constraint-text">{study.constraint}</p>
+        </div>
+      </section>
+
+      <!-- Interactive SVG Architecture Diagram -->
+      <section class="diagram-section" aria-label="System architecture diagram">
+        <h2 class="section-heading">System Architecture</h2>
+        <ArchitectureDiagram type={study.diagramType} />
+      </section>
+
+      <!-- Decisions & Alternatives -->
+      <section class="content-section" aria-label="Architecture decisions and alternatives considered">
+        <h2 class="section-heading">Architecture Decisions &amp; Trade-offs</h2>
+        <div class="decisions-list">
+          {study.decisions.map((dec) => (
+            <div class="decision-card glass">
+              <h3 class="decision-title">{dec.title}</h3>
+              <p class="decision-explanation">{dec.explanation}</p>
+              <div class="alternative-box">
+                <span class="alt-label">Alternatives Evaluated:</span>
+                <span class="alt-text">{dec.alternative}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- What I would do differently (TODO placeholder) -->
+      <section class="differently-section" aria-label="Retrospective and future directions">
+        <div class="todo-banner">
+          <div class="todo-badge">RETROSPECTIVE &amp; FUTURE DIRECTIONS</div>
+          <h2 class="todo-title">What I would do differently</h2>
+          <p class="todo-note">{study.todoNote}</p>
+        </div>
+      </section>
+
+      <!-- External Proof & Verification Links -->
+      <section class="links-section" aria-label="Code and verification links">
+        <h2 class="section-heading">Proof, Code &amp; Documentation</h2>
+        <div class="links-grid">
+          {study.links.map((link) => (
+            <a
+              href={link.url}
+              class="proof-link-card glass"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="link-label">{link.label}</span>
+              <span class="link-arrow">&nearr;</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .case-study-page {
+    padding-top: calc(var(--space-16) + 2rem);
+    padding-bottom: var(--section-gap);
+  }
+
+  .case-study-container {
+    max-width: 54rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-weight: var(--weight-medium);
+    transition: color var(--duration-fast) var(--ease-out);
+    width: fit-content;
+  }
+
+  .back-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* Header */
+  .study-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .study-tag {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+  }
+
+  .study-title {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tighter);
+    line-height: var(--leading-tight);
+    color: var(--color-text);
+  }
+
+  .study-subtitle {
+    font-size: var(--text-xl);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
+  }
+
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .meta-label {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--color-muted);
+    font-weight: var(--weight-semibold);
+  }
+
+  .meta-val {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+  }
+
+  /* Metrics Section */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .metric-card {
+    padding: var(--space-4);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .metric-val {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  .metric-lbl {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+  }
+
+  /* Flow Section */
+  .flow-track {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .flow-card {
+    padding: var(--space-4);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    position: relative;
+  }
+
+  .flow-step-num {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    font-weight: var(--weight-bold);
+  }
+
+  .flow-step-title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+  }
+
+  .flow-step-detail {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    line-height: var(--leading-normal);
+  }
+
+  .flow-arrow {
+    position: absolute;
+    right: -0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    font-size: var(--text-lg);
+  }
+
+  @media (max-width: 640px) {
+    .flow-arrow { display: none; }
+  }
+
+  /* Content & Prose */
+  .section-heading {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    margin-bottom: var(--space-4);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .section-prose {
+    font-size: var(--text-base);
+    color: var(--color-text);
+    line-height: var(--leading-relaxed);
+  }
+
+  .constraint-box {
+    margin-top: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-accent);
+  }
+
+  .constraint-title {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--color-accent);
+    margin-bottom: var(--space-1);
+  }
+
+  .constraint-text {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Decisions */
+  .decisions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .decision-card {
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .decision-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+  }
+
+  .decision-explanation {
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    line-height: var(--leading-relaxed);
+  }
+
+  .alternative-box {
+    margin-top: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--text-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .alt-label {
+    font-weight: var(--weight-semibold);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .alt-text {
+    color: var(--color-muted);
+    line-height: var(--leading-normal);
+  }
+
+  /* TODO Banner */
+  .todo-banner {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-accent);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .todo-badge {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .todo-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+  }
+
+  .todo-note {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  /* Links Grid */
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: var(--space-3);
+  }
+
+  .proof-link-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition:
+      transform var(--duration-fast) var(--ease-spring),
+      border-color var(--duration-fast) var(--ease-out);
+    min-height: 48px;
+  }
+
+  .proof-link-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-accent);
+  }
+
+  .link-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+  }
+
+  .link-arrow {
+    color: var(--color-accent);
+    font-size: var(--text-base);
+  }
+
+  /* Mobile Responsive Optimization for Case Study Page */
+  @media (max-width: 640px) {
+    .case-study-page {
+      padding-top: calc(var(--space-12) + 1.25rem);
+    }
+    .case-study-container {
+      gap: var(--space-8);
+    }
+    .meta-strip {
+      gap: var(--space-4);
+    }
+    .decision-card {
+      padding: 1.25rem 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .study-title {
+      font-size: clamp(1.85rem, 6.5vw, 2.5rem);
+    }
+    .study-subtitle {
+      font-size: var(--text-base);
+    }
+    .section-heading {
+      font-size: var(--text-xl);
+    }
+  }
+
+  @media (max-width: 360px) {
+    .metrics-grid {
+      grid-template-columns: 1fr;
+    }
+    .flow-track {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
