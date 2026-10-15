@@ -1,0 +1,489 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import NavDock from "@/components/nav/NavDock.astro";
+import Footer from "@/components/footer/Footer.astro";
+import githubData from "@/data/github.json";
+
+const skillCategories = [
+  {
+    category: "Languages",
+    items: [
+      { name: "Java", level: "Primary", notes: "Core language for GSoC (Quarkus & Spring Boot), concurrency, NIO" },
+      { name: "TypeScript / JS", level: "Active", notes: "Fullstack tooling, AST transformations, tests" },
+      { name: "SQL", level: "Active", notes: "PostgreSQL, MySQL, query planning, pessimistic locks" },
+      { name: "Go", level: "Working", notes: "CLI tooling, distributed agents" },
+      { name: "Python", level: "Working", notes: "Automation scripts, data manipulation" },
+    ],
+  },
+  {
+    category: "Backend & Systems Architecture",
+    items: [
+      { name: "Quarkus 3", level: "Primary", notes: "CDI selection (@LookupIfProperty), systemd daemons, REST" },
+      { name: "Spring Boot & Cloud", level: "Primary", notes: "Spring Cloud Gateway, Spring Security OAuth2/JWT" },
+      { name: "Keycloak 24", level: "Production", notes: "IAM, realm management, token exchange, client credentials" },
+      { name: "REST & OpenAPI", level: "Production", notes: "202 Accepted asynchronous endpoints, contract design" },
+      { name: "Clean Architecture", level: "Pattern", notes: "Domain records, Command pattern, decoupled services" },
+    ],
+  },
+  {
+    category: "Data, Streaming & Distributed Coordination",
+    items: [
+      { name: "Debezium CDC", level: "Core", notes: "Database change data capture, WAL parsing, server image runtime" },
+      { name: "Apache Kafka", level: "Production", notes: "Event streaming, consumer groups, partition management" },
+      { name: "Apache Avro", level: "Production", notes: "Strict schema contracts via Confluent Schema Registry" },
+      { name: "PostgreSQL & MySQL", level: "Production", notes: "Sorted PESSIMISTIC_WRITE locking, Flyway migrations" },
+      { name: "MongoDB", level: "Active", notes: "Document store for product catalogs and audit logs" },
+    ],
+  },
+  {
+    category: "Infrastructure, Automation & Observability",
+    items: [
+      { name: "Ansible", level: "Production", notes: "Idempotent host provisioning, isolated thread execution" },
+      { name: "Docker & Kubernetes", level: "Production", notes: "Multi-stage container builds, pod specs, deployments" },
+      { name: "systemd & Linux", level: "Core", notes: "Daemon units, service recovery, journald logging" },
+      { name: "Prometheus & Zipkin", level: "Production", notes: "Distributed tracing, metrics scraping, SLI/SLO monitoring" },
+      { name: "Testcontainers & JUnit", level: "Testing", notes: "Real database and Kafka integration test harnesses" },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="Technical Stack & Open Source Metrics | Divyanshu Kumar"
+  description="Verified engineering capabilities, distributed systems stack, and open source contribution metrics across 13 organizations."
+>
+  <NavDock />
+
+  <main id="main-content" class="stack-page">
+    <div class="container stack-container">
+      <header class="stack-header">
+        <span class="stack-eyebrow">CAPABILITIES &amp; METRICS</span>
+        <h1 class="stack-title">Engineered for resilience, concurrency, and observability.</h1>
+        <p class="stack-intro">
+          A production-proven technology stack focused on high-throughput backend services, distributed change data capture, and zero-downtime automation.
+        </p>
+      </header>
+
+      <!-- Open Source Scorecard -->
+      <section class="scorecard-section" aria-label="Open source metrics scorecard">
+        <div class="scorecard-grid">
+          <div class="scorecard-item glass">
+            <span class="score-num">{githubData.totalPRs}</span>
+            <span class="score-label">Total Pull Requests</span>
+            <span class="score-sub">Across 20 repositories</span>
+          </div>
+
+          <div class="scorecard-item glass">
+            <span class="score-num">{githubData.mergedPRs}</span>
+            <span class="score-label">Merged Pull Requests</span>
+            <span class="score-sub">55.3% acceptance rate</span>
+          </div>
+
+          <div class="scorecard-item glass">
+            <span class="score-num">{githubData.totalOrgs}</span>
+            <span class="score-label">Organizations Contributed</span>
+            <span class="score-sub">Red Hat, MIT, CNCF, etc.</span>
+          </div>
+
+          <div class="scorecard-item glass">
+            <span class="score-num">{githubData.languages.length}</span>
+            <span class="score-label">Core Polyglot Languages</span>
+            <span class="score-sub">{githubData.languages.join(", ")}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Velocity Metric: Days from First PR to First Merge -->
+      <section class="velocity-section" aria-label="Velocity and time to first merge">
+        <div class="section-title-row">
+          <h2 class="section-heading">Open Source Velocity: Time to First Merge</h2>
+          <span class="velocity-badge glass">Verified from repository history</span>
+        </div>
+        <p class="velocity-desc">
+          Measuring the time required to understand an unfamiliar multi-thousand-star codebase, pass maintainer review, and achieve the first merged pull request.
+        </p>
+
+        <div class="velocity-grid">
+          {githubData.daysToFirstMerge.map((item) => (
+            <div class="velocity-card glass">
+              <div class="vel-top">
+                <span class="vel-org">{item.org}</span>
+                <span class="vel-prs">{item.mergedPRs} merged</span>
+              </div>
+              <div class="vel-metric">
+                <span class="vel-days">{item.days}</span>
+                <span class="vel-unit">days</span>
+              </div>
+              <span class="vel-repo">{item.repo}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Categorized Skill Matrix -->
+      <section class="skills-matrix-section" aria-label="Detailed technical skill matrix">
+        <h2 class="section-heading">Production Stack Breakdown</h2>
+
+        <div class="matrix-grid">
+          {skillCategories.map((cat) => (
+            <div class="category-block glass">
+              <h3 class="category-title">{cat.category}</h3>
+              <div class="skills-list">
+                {cat.items.map((skill) => (
+                  <div class="skill-row">
+                    <div class="skill-main">
+                      <span class="skill-name">{skill.name}</span>
+                      <span class="skill-badge">{skill.level}</span>
+                    </div>
+                    <p class="skill-notes">{skill.notes}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Organizations Contributed List -->
+      <section class="orgs-section" aria-label="Organizations and community contributions">
+        <h2 class="section-heading">Organizations &amp; Community Contributions</h2>
+        <div class="orgs-grid">
+          {githubData.orgs.map((org) => (
+            <div class="org-pill glass">
+              <span class="org-name">{org.name}</span>
+              <span class="org-prs">{org.prs} PRs</span>
+              <span class="org-lang">{org.language}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .stack-page {
+    padding-top: calc(var(--space-16) + 2rem);
+    padding-bottom: var(--section-gap);
+  }
+
+  .stack-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .stack-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: 48rem;
+  }
+
+  .stack-eyebrow {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .stack-title {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tighter);
+    color: var(--color-text);
+    line-height: var(--leading-tight);
+  }
+
+  .stack-intro {
+    font-size: var(--text-lg);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Scorecard */
+  .scorecard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .scorecard-item {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .score-num {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  .score-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+  }
+
+  .score-sub {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* Velocity */
+  .section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .section-heading {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .velocity-badge {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    color: var(--color-open-to-work);
+  }
+
+  .velocity-desc {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
+    max-width: 44rem;
+    margin-bottom: var(--space-6);
+  }
+
+  .velocity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .velocity-card {
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .vel-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .vel-org {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+  }
+
+  .vel-prs {
+    font-size: 0.6875rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+  }
+
+  .vel-metric {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .vel-days {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  .vel-unit {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .vel-repo {
+    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    color: var(--color-muted);
+    word-break: break-all;
+  }
+
+  /* Matrix */
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+
+  .category-block {
+    padding: var(--space-8);
+    border-radius: var(--radius-2xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .category-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .skill-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .skill-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .skill-name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+  }
+
+  .skill-badge {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-accent);
+    text-transform: uppercase;
+  }
+
+  .skill-notes {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    line-height: var(--leading-normal);
+  }
+
+  /* Orgs Grid */
+  .orgs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .org-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+  }
+
+  .org-name {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+  }
+
+  .org-prs {
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  .org-lang {
+    color: var(--color-muted);
+    font-size: 0.6875rem;
+  }
+
+  /* Mobile Responsive Optimization for Stack Page */
+  @media (max-width: 640px) {
+    .stack-page {
+      padding-top: calc(var(--space-12) + 1.25rem);
+    }
+    .stack-container {
+      gap: var(--space-8);
+    }
+    .scorecard-item {
+      padding: 1.15rem 1rem;
+    }
+    .scorecard-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.65rem;
+    }
+    .velocity-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.65rem;
+    }
+    .velocity-card {
+      padding: 1rem 0.85rem;
+    }
+    .category-block {
+      padding: 1.35rem 1.15rem;
+      border-radius: var(--radius-xl);
+      gap: var(--space-4);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stack-title {
+      font-size: clamp(1.85rem, 6.5vw, 2.5rem);
+    }
+    .section-heading {
+      font-size: var(--text-xl);
+    }
+    .score-num {
+      font-size: var(--text-3xl);
+    }
+    .vel-days {
+      font-size: var(--text-2xl);
+    }
+    .org-pill {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.6875rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .scorecard-grid {
+      grid-template-columns: 1fr;
+    }
+    .velocity-grid {
+      grid-template-columns: 1fr;
+    }
+    .category-block {
+      padding: 1rem 0.85rem;
+    }
+  }
+</style>
