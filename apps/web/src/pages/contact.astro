@@ -1,0 +1,470 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import NavDock from "@/components/nav/NavDock.astro";
+import Footer from "@/components/footer/Footer.astro";
+import StatusChip from "@/components/ui/StatusChip.astro";
+
+const contactLinks = [
+  {
+    label: "Email",
+    value: "kumardivyanshu118@gmail.com",
+    href: "mailto:kumardivyanshu118@gmail.com",
+    action: "Send email",
+  },
+  {
+    label: "GitHub",
+    value: "@d1vyanshu-kumar",
+    href: "https://github.com/d1vyanshu-kumar",
+    action: "View profile",
+  },
+  {
+    label: "LinkedIn",
+    value: "divyanshu-kumar-24026b296",
+    href: "https://linkedin.com/in/divyanshu-kumar-24026b296",
+    action: "Connect",
+  },
+  {
+    label: "X (Twitter)",
+    value: "@NykDivyanshu",
+    href: "https://x.com/NykDivyanshu",
+    action: "Follow",
+  },
+  {
+    label: "dev.to",
+    value: "@d1vyanshukumar",
+    href: "https://dev.to/d1vyanshukumar",
+    action: "Read posts",
+  },
+];
+---
+
+<BaseLayout
+  title="Contact & Reach Out | Divyanshu Kumar"
+  description="Get in touch with Divyanshu Kumar. Open to backend, platform, and distributed systems engineering roles (remote or relocation)."
+>
+  <NavDock />
+
+  <main id="main-content" class="contact-page">
+    <div class="container contact-container">
+      <div class="contact-layout">
+        <div class="contact-text-col">
+          <StatusChip text="Open to work &middot; Remote / Relocation" />
+
+          <h1 class="contact-title">Let's build reliable distributed infrastructure.</h1>
+          <p class="contact-intro">
+            Currently open to full-time backend and platform engineering roles, high-concurrency systems design, or open source technical collaboration.
+          </p>
+
+          <div class="email-cta-box glass">
+            <span class="email-label">DIRECT INBOX</span>
+            <div class="email-row">
+              <a href="mailto:kumardivyanshu118@gmail.com" class="email-link">
+                kumardivyanshu118@gmail.com
+              </a>
+              <button
+                type="button"
+                id="copy-email-btn"
+                class="copy-btn"
+                aria-label="Copy email address"
+              >
+                Copy
+              </button>
+            </div>
+            <span id="copy-feedback" class="copy-feedback" hidden>
+              Copied to clipboard!
+            </span>
+          </div>
+
+          <div class="links-list">
+            {contactLinks.map((item) => (
+              <a
+                href={item.href}
+                class="contact-item-row glass"
+                target={item.href.startsWith("http") ? "_blank" : undefined}
+                rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              >
+                <div class="item-info">
+                  <span class="item-label">{item.label}</span>
+                  <span class="item-value">{item.value}</span>
+                </div>
+                <span class="item-action">{item.action} &nearr;</span>
+              </a>
+            ))}
+          </div>
+
+          <div class="location-note">
+            <span class="loc-dot" aria-hidden="true"></span>
+            <span>Based in Gurugram, India. Open to remote or on-site relocation.</span>
+          </div>
+        </div>
+
+        <!-- Mountain Portrait Card in Glowing Glass Frame -->
+        <div class="contact-photo-col">
+          <div class="contact-card-glass glass">
+            <div class="contact-photo-frame">
+              <picture>
+                <source srcset="/photo/nayak-mountain.webp" type="image/webp" />
+                <img
+                  src="/photo/nayak-mountain.jpg"
+                  alt="Divyanshu Kumar in the mountains"
+                  class="contact-portrait-img"
+                  width="400"
+                  height="400"
+                  loading="eager"
+                />
+              </picture>
+              <div class="photo-overlay-tag">
+                <span>📍</span> Gurugram &middot; India
+              </div>
+            </div>
+
+            <div class="contact-card-info">
+              <div class="card-name-row">
+                <span class="card-name">Divyanshu Kumar</span>
+                <span class="card-role">Software Engineer</span>
+              </div>
+              <p class="card-desc">
+                Two-time GSoC contributor. Making systems reach the machines they were never designed for.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  import confetti from "canvas-confetti";
+
+  function setupCopyEmail() {
+    const btn = document.getElementById("copy-email-btn");
+    const feedback = document.getElementById("copy-feedback");
+
+    btn?.addEventListener("click", () => {
+      navigator.clipboard.writeText("kumardivyanshu118@gmail.com").then(() => {
+        if (feedback) {
+          feedback.hidden = false;
+          confetti({
+            particleCount: 30,
+            spread: 50,
+            origin: { y: 0.6 },
+            colors: ["#FF5436", "#6366F1", "#3DDC84"],
+          });
+          setTimeout(() => {
+            feedback.hidden = true;
+          }, 2500);
+        }
+      });
+    });
+  }
+
+  setupCopyEmail();
+  document.addEventListener("astro:page-load", setupCopyEmail);
+</script>
+
+<style>
+  .contact-page {
+    padding-top: calc(var(--space-16) + 2rem);
+    padding-bottom: var(--section-gap);
+  }
+
+  .contact-container {
+    max-width: 58rem;
+  }
+
+  .contact-layout {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: var(--space-12);
+    align-items: center;
+  }
+
+  .contact-text-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .contact-title {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tighter);
+    color: var(--color-text);
+    line-height: var(--leading-tight);
+  }
+
+  .contact-intro {
+    font-size: var(--text-lg);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Email Box */
+  .email-cta-box {
+    padding: var(--space-5) var(--space-6);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .email-label {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .email-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .email-link {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+    word-break: break-all;
+  }
+
+  .email-link:hover {
+    color: var(--color-accent);
+  }
+
+  .copy-btn {
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    transition: transform var(--duration-fast) var(--ease-spring);
+    min-height: 36px;
+    cursor: pointer;
+  }
+
+  .copy-btn:hover {
+    transform: scale(1.05);
+  }
+
+  .copy-feedback {
+    font-size: var(--text-xs);
+    color: var(--color-open-to-work);
+    font-family: var(--font-mono);
+  }
+
+  /* Links List */
+  .links-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .contact-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition:
+      transform var(--duration-fast) var(--ease-spring),
+      border-color var(--duration-fast) var(--ease-out);
+    min-height: 48px;
+  }
+
+  .contact-item-row:hover {
+    transform: translateX(4px);
+    border-color: var(--color-accent);
+  }
+
+  .item-info {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  .item-label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    font-weight: var(--weight-semibold);
+    min-width: 5rem;
+  }
+
+  .item-value {
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+  }
+
+  .item-action {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    white-space: nowrap;
+  }
+
+  .location-note {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .loc-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* Photo Card Column */
+  .contact-photo-col {
+    display: flex;
+    justify-content: center;
+  }
+
+  .contact-card-glass {
+    border-radius: var(--radius-2xl);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 24rem;
+  }
+
+  .contact-photo-frame {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, rgba(255, 84, 54, 0.5), rgba(99, 102, 241, 0.5));
+    padding: 3px;
+  }
+
+  .contact-portrait-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+    border-radius: calc(var(--radius-xl) - 3px);
+    display: block;
+  }
+
+  .photo-overlay-tag {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    background: rgba(11, 11, 13, 0.8);
+    backdrop-filter: blur(8px);
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.6875rem;
+    font-family: var(--font-mono);
+    color: #ededef;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .contact-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .card-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .card-name {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+  }
+
+  .card-role {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  .card-desc {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    line-height: var(--leading-normal);
+  }
+
+  @media (max-width: 800px) {
+    .contact-layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-8);
+    }
+    .contact-photo-col {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .contact-page {
+      padding-top: calc(var(--space-12) + 1.25rem);
+    }
+    .contact-container {
+      gap: var(--space-6);
+    }
+    .email-cta-box {
+      padding: 1.15rem 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .contact-title {
+      font-size: clamp(1.85rem, 6.5vw, 2.5rem);
+    }
+    .email-link {
+      font-size: clamp(0.875rem, 4.2vw, 1.125rem);
+    }
+    .contact-card-glass {
+      padding: 1.15rem;
+      max-width: 100%;
+    }
+    .contact-item-row {
+      padding: 0.65rem 0.75rem;
+    }
+    .item-label {
+      min-width: 4rem;
+    }
+    .item-value {
+      font-size: 0.78125rem;
+      word-break: break-all;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .email-cta-box {
+      padding: 1rem 0.75rem;
+    }
+    .copy-btn {
+      width: 100%;
+      text-align: center;
+    }
+    .email-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+</style>
