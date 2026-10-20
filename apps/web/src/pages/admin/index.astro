@@ -1,0 +1,13 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AdminEditor from "@/components/blog/AdminEditor";
+---
+
+<BaseLayout
+  title="Admin | Divyanshu Kumar"
+  description="Admin portal"
+>
+  <main id="main-content">
+    <AdminEditor client:load />
+  </main>
+</BaseLayout>
