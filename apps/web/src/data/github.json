@@ -1,0 +1,29 @@
+{
+  "_source": "seed",
+  "_note": "Seeded strictly from docs/source/facts.md. Refreshable with GITHUB_TOKEN via scripts/fetch-github-data.mjs.",
+  "username": "d1vyanshu-kumar",
+  "totalPRs": 47,
+  "mergedPRs": 26,
+  "totalRepos": 20,
+  "totalOrgs": 13,
+  "languages": ["Java", "TypeScript", "JavaScript", "Python", "Go"],
+  "daysToFirstMerge": [
+    { "repo": "debezium/debezium", "org": "Debezium", "days": 14, "mergedPRs": 8 },
+    { "repo": "mit-csl/appinventor-sources", "org": "MIT App Inventor", "days": 18, "mergedPRs": 7 },
+    { "repo": "kubernetes-sigs/headlamp", "org": "Kubernetes SIGs", "days": 12, "mergedPRs": 1 },
+    { "repo": "cameri/nostream", "org": "nostream", "days": 6, "mergedPRs": 1 },
+    { "repo": "samanway-foundation/avni", "org": "Avni", "days": 21, "mergedPRs": 3 }
+  ],
+  "orgs": [
+    { "name": "Debezium", "prs": 10, "merged": 8, "language": "Java" },
+    { "name": "MIT App Inventor", "prs": 12, "merged": 9, "language": "Java" },
+    { "name": "Kubernetes SIGs", "prs": 2, "merged": 1, "language": "TypeScript" },
+    { "name": "nostream", "prs": 2, "merged": 1, "language": "TypeScript" },
+    { "name": "Avni (C4GT)", "prs": 5, "merged": 3, "language": "Java" },
+    { "name": "Sugarizer", "prs": 2, "merged": 1, "language": "JavaScript" },
+    { "name": "Webiu", "prs": 2, "merged": 1, "language": "TypeScript" },
+    { "name": "Kruise", "prs": 2, "merged": 0, "language": "Go" },
+    { "name": "ImageLab", "prs": 2, "merged": 1, "language": "Python" },
+    { "name": "GDB-UI", "prs": 2, "merged": 1, "language": "TypeScript" }
+  ]
+}
