@@ -1,5 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Ensure safe server-side static rendering across all Node versions
+if (typeof globalThis.WebSocket === "undefined" && typeof window === "undefined") {
+  // @ts-ignore
+  globalThis.WebSocket = class DummyWebSocket {
+    constructor() {}
+    addEventListener() {}
+    removeEventListener() {}
+    send() {}
+    close() {}
+  };
+}
+
+
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string;
 
