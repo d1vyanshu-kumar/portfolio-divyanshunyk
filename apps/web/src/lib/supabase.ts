@@ -13,8 +13,8 @@ if (typeof globalThis.WebSocket === "undefined" && typeof window === "undefined"
 }
 
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL as string) || "https://ntfiyynlsfplntnxevak.supabase.co";
+const supabaseAnonKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string) || "sb_publishable_XPqOE8BuZF8cKmrpupqo8g_v8Z5VVRB";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: true, autoRefreshToken: true },
