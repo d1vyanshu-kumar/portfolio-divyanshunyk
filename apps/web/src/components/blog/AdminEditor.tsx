@@ -33,6 +33,7 @@ function useAdminAuth() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -53,16 +54,21 @@ function useAdminAuth() {
       email,
       options: { emailRedirectTo: `${window.location.origin}/admin` },
     });
-    if (!error) setSent(true);
+    if (error) {
+      console.error("Magic link error:", error);
+      setAuthError(error.message);
+    } else {
+      setSent(true);
+    }
     setLoading(false);
   };
 
   const signOut = () => supabase.auth.signOut();
 
-  return { user, email, setEmail, sent, loading, sendMagicLink, signOut };
+  return { user, email, setEmail, sent, loading, authError, sendMagicLink, signOut };
 }
 
-function LoginScreen({ email, setEmail, sent, loading, sendMagicLink }: ReturnType<typeof useAdminAuth>) {
+function LoginScreen({ email, setEmail, sent, loading, authError, sendMagicLink }: ReturnType<typeof useAdminAuth>) {
   return (
     <div className="admin-login">
       <div className="admin-login-card">
@@ -87,6 +93,11 @@ function LoginScreen({ email, setEmail, sent, loading, sendMagicLink }: ReturnTy
             <button type="submit" className="admin-login-btn" disabled={loading}>
               {loading ? "Sending..." : "Send Magic Link"}
             </button>
+            {authError && (
+              <p style={{ color: "#ff5436", fontSize: "0.875rem", marginTop: "0.75rem", textAlign: "center" }}>
+                ⚠️ {authError}
+              </p>
+            )}
           </form>
         )}
       </div>
