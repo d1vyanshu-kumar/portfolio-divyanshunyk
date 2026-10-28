@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ Divyanshu Kumar — Senior Engineering Portfolio & Living Blog
+# ⚡ Divyanshu Kumar - Engineering Portfolio & Living Blog
 
 *Distributed Systems · Data Streaming & CDC Pipelines · High-Performance Web Architecture*
 
