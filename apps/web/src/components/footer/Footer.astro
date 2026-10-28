@@ -1,0 +1,373 @@
+---
+const currentYear = new Date().getFullYear();
+const currentPath = Astro.url.pathname;
+
+// Dynamic next chapter mapping
+interface Chapter {
+  label: string;
+  title: string;
+  href: string;
+}
+
+let nextChapter: Chapter;
+
+if (currentPath === "/work" || currentPath.startsWith("/work/")) {
+  nextChapter = {
+    label: "Next chapter",
+    title: "Technology Stack & Metrics",
+    href: "/stack",
+  };
+} else if (currentPath === "/stack" || currentPath.startsWith("/stack/")) {
+  nextChapter = {
+    label: "Next chapter",
+    title: "Get in touch & Connect",
+    href: "/contact",
+  };
+} else if (currentPath === "/contact") {
+  nextChapter = {
+    label: "Back to start",
+    title: "Return to Homepage",
+    href: "/",
+  };
+} else {
+  // Default (e.g. Home or 404)
+  nextChapter = {
+    label: "Next chapter",
+    title: "Selected Work & Case Studies",
+    href: "/work",
+  };
+}
+
+const socialLinks = [
+  { label: "GitHub", href: "https://github.com/d1vyanshu-kumar" },
+  { label: "LinkedIn", href: "https://linkedin.com/in/divyanshu-kumar-24026b296" },
+  { label: "X", href: "https://x.com/NykDivyanshu" },
+  { label: "dev.to", href: "https://dev.to/d1vyanshukumar" },
+];
+---
+
+<footer class="footer section" id="footer" aria-label="Footer">
+  <div class="container footer-inner">
+    <!-- Next Chapter Banner -->
+    <div class="footer-top">
+      <a href={nextChapter.href} class="footer-next-chapter">
+        <span class="footer-next-label">{nextChapter.label}</span>
+        <span class="footer-next-title">{nextChapter.title} &rarr;</span>
+      </a>
+    </div>
+
+    <!-- Music / Live Spotify & Last.fm Badge & Status -->
+    <div class="footer-middle">
+      <a
+        id="music-pill"
+        class="music-pill"
+        href="https://www.last.fm/user/div_xo"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Live music status on Spotify / Last.fm"
+        title="View profile on Last.fm"
+      >
+        <span class="music-pulse" id="music-pulse" aria-hidden="true">
+          <span class="pulse-bar bar-1"></span>
+          <span class="pulse-bar bar-2"></span>
+          <span class="pulse-bar bar-3"></span>
+        </span>
+        <span class="music-text">
+          <span class="music-label" id="music-label">Listening to Spotify:</span>
+          <span class="music-track" id="music-track">Connected · div_xo</span>
+        </span>
+      </a>
+
+      <div class="footer-status-text">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Based in Gurugram, India &middot; Open to remote or relocation</span>
+      </div>
+    </div>
+
+    <!-- Bottom Metadata & Links -->
+    <div class="footer-bottom">
+      <div class="footer-meta">
+        <span class="footer-copyright">&copy; {currentYear} Divyanshu Kumar</span>
+        <span class="footer-separator" aria-hidden="true">&middot;</span>
+        <span class="footer-credit">Stack-agnostic legacy whisperer</span>
+        <span class="footer-separator" aria-hidden="true">&middot;</span>
+        <span class="footer-credit">Architecting zero-downtime distributed scale</span>
+      </div>
+
+      <nav class="footer-social" aria-label="Social and developer links">
+        {socialLinks.map(({ label, href }) => (
+          <a
+            href={href}
+            class="footer-social-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {label} &nearr;
+          </a>
+        ))}
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-12);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .footer-next-chapter {
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    text-decoration: none;
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+
+  .footer-next-chapter:hover {
+    transform: translateX(4px);
+  }
+
+  .footer-next-label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    font-weight: var(--weight-semibold);
+  }
+
+  .footer-next-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    letter-spacing: var(--tracking-tight);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .footer-next-chapter:hover .footer-next-title {
+    color: var(--color-accent);
+  }
+
+  /* Music Pill */
+  .footer-middle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--color-border);
+  }
+
+  .music-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    font-size: var(--text-xs);
+  }
+
+  .music-pulse {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+  }
+
+  .music-pill:hover { border-color: var(--color-accent); transform: translateY(-1px); transition: all 0.2s ease; }
+  .music-pulse.pulse-paused .pulse-bar { animation: none; opacity: 0.45; }
+  .pulse-bar {
+    width: 2px;
+    background: var(--color-open-to-work);
+    border-radius: 1px;
+    animation: bounce 1.2s ease-in-out infinite alternate;
+  }
+
+  .bar-1 { height: 8px; animation-delay: 0.1s; }
+  .bar-2 { height: 12px; animation-delay: 0.3s; }
+  .bar-3 { height: 6px; animation-delay: 0.5s; }
+
+  @keyframes bounce {
+    0% { transform: scaleY(0.4); }
+    100% { transform: scaleY(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .music-pill:hover { border-color: var(--color-accent); transform: translateY(-1px); transition: all 0.2s ease; }
+  .music-pulse.pulse-paused .pulse-bar { animation: none; opacity: 0.45; }
+  .pulse-bar { animation: none; }
+  }
+
+  .music-text {
+    display: flex;
+    gap: var(--space-1);
+    color: var(--color-muted);
+  }
+
+  .music-track {
+    color: var(--color-text);
+    font-weight: var(--weight-medium);
+  }
+
+  .footer-status-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-open-to-work);
+  }
+
+  /* Bottom */
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .footer-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .footer-separator {
+    opacity: 0.4;
+  }
+
+  .footer-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .footer-social-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-weight: var(--weight-medium);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .footer-social-link:hover {
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 640px) {
+    .footer {
+      padding-top: var(--space-10);
+      padding-bottom: var(--space-8);
+    }
+    .footer-inner {
+      gap: var(--space-8);
+    }
+    .footer-bottom,
+    .footer-middle {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer-next-title {
+      font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+    }
+    .music-pill {
+      flex-wrap: wrap;
+      padding: 0.35rem 0.65rem;
+    }
+    .footer-meta {
+      font-size: 0.6875rem;
+      gap: 0.35rem;
+    }
+    .footer-social {
+      gap: 0.75rem;
+    }
+    .footer-social-link {
+      font-size: 0.8125rem;
+      min-height: 38px;
+    }
+  }
+</style>
+
+<script>
+  function initMusicWidget() {
+    const pill = document.getElementById("music-pill");
+    const pulse = document.getElementById("music-pulse");
+    const label = document.getElementById("music-label");
+    const trackEl = document.getElementById("music-track");
+
+    if (!pill || !label || !trackEl) return;
+
+    const USER = "div_xo";
+    const API_KEY = "abdae9953b777a5d5c3c4e201d987cbc";
+    const URL = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USER}&api_key=${API_KEY}&format=json&limit=1`;
+
+    async function fetchTrack() {
+      if (!pill || !label || !trackEl) return;
+      try {
+        const res = await fetch(URL);
+        if (!res.ok) return;
+        const data = await res.json();
+        const tracks = data?.recenttracks?.track;
+        if (!tracks || tracks.length === 0) return;
+
+        const latest = Array.isArray(tracks) ? tracks[0] : tracks;
+        const isNowPlaying = latest?.["@attr"]?.nowplaying === "true";
+        const songName = latest?.name || "";
+        const artistName = latest?.artist?.["#text"] || latest?.artist?.name || "";
+
+        if (songName) {
+          if (isNowPlaying) {
+            label.textContent = "Listening to Spotify:";
+            trackEl.textContent = `${songName} · ${artistName}`;
+            pulse?.classList.remove("pulse-paused");
+            pill.setAttribute("title", `Now playing: ${songName} by ${artistName}`);
+          } else {
+            label.textContent = "Recently played:";
+            trackEl.textContent = `${songName} · ${artistName}`;
+            pulse?.classList.add("pulse-paused");
+            pill.setAttribute("title", `Recently played: ${songName} by ${artistName}`);
+          }
+          if (latest?.url) {
+            pill.setAttribute("href", latest.url);
+          }
+        }
+      } catch (e) {
+        // Fallback silently
+      }
+    }
+
+    fetchTrack();
+    const timer = setInterval(fetchTrack, 25000);
+    return () => clearInterval(timer);
+  }
+
+  initMusicWidget();
+  document.addEventListener("astro:page-load", initMusicWidget);
+</script>
